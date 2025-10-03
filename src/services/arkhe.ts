@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import 'server-only';
 import { AppError, ErrorType } from '@/utils/errors';
 import logger from '@/utils/logger';
 import { AnalysisJob, ArkheReport } from '@/types/geo';
 import { handleServiceError } from '@/utils/errorHandlers';
-import { scrapWithPlaywright } from '@/services/playwrightScraper';
+import { scrapWithPuppeteer } from '@/services/puppeteerScraper';
+// import { scrapWithPlaywright } from '@/services/playwrightScraper';
 import { analyzeBusinessModel, analyzeTargetAudience, analyzeCompetitors } from '@/utils/aiAnalyzer';
 // import { PlaywrightScrapeResult } from '@/utils/types/analysis';
 
@@ -11,7 +13,8 @@ export async function runArkheAnalysis(job: AnalysisJob): Promise<ArkheReport | 
   logger.info(`Starting Arkhe analysis for job ${job.id}`, 'arkhe-service', { url: job.url });
 
   try {
-    const { html, content, robotsTxt, llmsTxt } = await scrapWithPlaywright(job.url);
+    // const { html, content, robotsTxt, llmsTxt } = await scrapWithPlaywright(job.url);
+    const { html, content, robotsTxt, llmsTxt } = await scrapWithPuppeteer(job.url);
 
     if (!content || content.trim().length < 100) {
       throw new AppError(ErrorType.VALIDATION, 'Scraped content is insufficient for Arkhe analysis.');
@@ -55,4 +58,3 @@ export async function runArkheAnalysis(job: AnalysisJob): Promise<ArkheReport | 
     return handleServiceError(error, 'arkhe.runArkheAnalysis');
   }
 }
-import 'server-only';

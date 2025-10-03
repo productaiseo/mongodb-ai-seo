@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { scrapWithPlaywright } from '@/services/playwrightScraper';
+import 'server-only';
+import { scrapWithPuppeteer } from '@/services/puppeteerScraper';
+// import { scrapWithPlaywright } from '@/services/playwrightScraper';
 import { runPerformanceAnalysis } from '@/services/performanceAnalyzer';
 import { runArkheAnalysis } from '@/services/arkhe';
 import { runPrometheusAnalysis } from '@/services/prometheus';
@@ -88,7 +90,8 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     // 1) SCRAPE
     job = await updateJob(job, { status: 'PROCESSING_SCRAPE' });
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'STARTED' }); } catch {}
-    const { content: scrapedContent, html: scrapedHtml } = await scrapWithPlaywright(url);
+    const { content: scrapedContent, html: scrapedHtml } = await scrapWithPuppeteer(url);
+    // const { content: scrapedContent, html: scrapedHtml } = await scrapWithPlaywright(url);
     job = await updateJob(job, { scrapedContent, scrapedHtml });
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'COMPLETED' }); } catch {}
 
@@ -200,5 +203,3 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     );
   }
 }
-
-import 'server-only';

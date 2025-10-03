@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { PlaywrightScrapeResult } from '@/utils/types/analysis';
 import { AppError, ErrorType } from '@/utils/errors';
 import logger from '@/utils/logger';
+import 'server-only';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
@@ -158,5 +158,3 @@ export async function scrapWithPlaywright(url: string): Promise<PlaywrightScrape
     }
   );
 }
-
-import 'server-only';
