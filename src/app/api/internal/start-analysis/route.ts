@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const serverToken = (process.env.INTERNAL_API_TOKEN || '').trim();
     if (!serverToken) {
       console.error('[internal-start] INTERNAL_API_TOKEN missing in env');
+      logger.error('INTERNAL_API_TOKEN missing in env', 'internal-start-analysis');
       return NextResponse.json({ error: 'Server is not configured' }, { status: 500 });
     }
 

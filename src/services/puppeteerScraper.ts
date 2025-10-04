@@ -26,7 +26,6 @@ async function getBrowser() {
       VERCEL_ENV: process.env.VERCEL_ENV,
       platform: process.platform,
       arch: process.arch,
-      hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
       timestamp: new Date().toISOString()
     }
   );
@@ -57,9 +56,8 @@ async function getBrowser() {
       // Launch browser with proper configuration
       logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
       const browser = await puppeteer.launch({
-        headless: chromium.headless, // for better compatibility
+        headless: 'new',
         executablePath,
-        ignoreHTTPSErrors: true,
         args: [
           ...chromium.args,
           '--no-sandbox',
@@ -68,6 +66,7 @@ async function getBrowser() {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
+          '--single-process',
           '--disable-gpu',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor',
@@ -102,7 +101,6 @@ async function getBrowser() {
       
       const browser = await puppeteer.launch({
         headless: 'new',
-        ignoreHTTPSErrors: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -110,6 +108,7 @@ async function getBrowser() {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
+          '--single-process',
           '--disable-gpu',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor'
@@ -153,7 +152,6 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
           VERCEL_ENV: process.env.VERCEL_ENV,
           platform: process.platform,
           arch: process.arch,
-          hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
           timestamp: new Date().toISOString()
         }
       );
@@ -238,8 +236,6 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
       );
 
       logger.info(`[puppeteer-scraper] success - ${normalizedUrl}`);
-
-      console.log('content:', content)
       
       return { html, content, robotsTxt, llmsTxt, performanceMetrics };
     } catch (error: any) {

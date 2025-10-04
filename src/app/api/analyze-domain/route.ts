@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,6 +7,7 @@ import crypto from 'crypto';
 import dbConnect from '@/lib/dbConnect';
 import { AnalysisJobModel } from '@/models/AnalysisJob';
 import type { AnalysisJob } from '@/types/geo';
+import logger from '@/utils/logger';
 
 export const runtime = 'nodejs';
 
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     const key = process.env.INTERNAL_API_TOKEN || '';
     if (!key) {
+      logger.error('INTERNAL_API_TOKEN missing in env', 'internal-start-analysis');
       // Mark FAILED if misconfigured
       await AnalysisJobModel.updateOne(
         { id: jobId },

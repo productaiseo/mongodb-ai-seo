@@ -20,7 +20,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'jobId, userId ve domain zorunludur' }, { status: 400 });
     }
 
-    const token = (process.env.INTERNAL_API_TOKEN || '').trim();
+    // const token = (process.env.INTERNAL_API_TOKEN || '').trim();
+    // logger.info('Token check', 'enqueue-analysis', { hasToken: !!token });
+
+    const raw = process.env.INTERNAL_API_TOKEN;
+    const token = typeof raw === 'string' ? raw.trim() : '';
+    logger.info('Token check', 'enqueue-analysis', {
+      present: raw !== undefined,
+      type: typeof raw,
+      rawPreview: typeof raw === 'string' ? `${raw.slice(0, 4)}…(${raw.length})` : raw,
+      trimmedLength: token.length,
+    });
+
     const payload = { jobId, userId, domain };
 
     // Fallback: call local start-analysis

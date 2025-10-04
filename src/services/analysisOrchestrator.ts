@@ -79,7 +79,6 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     NODE_ENV: process.env.NODE_ENV,
     VERCEL: process.env.VERCEL,
     VERCEL_ENV: process.env.VERCEL_ENV,
-    hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
     timestamp: new Date().toISOString()
   });
 
