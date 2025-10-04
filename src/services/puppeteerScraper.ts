@@ -34,62 +34,47 @@ async function getBrowser() {
   if (isProduction) {
     try {
       logger.info(`[puppeteer-scraper] Setting up production browser...`, 'puppeteer-scraper');
-      
-      // Import packages properly
-      const [chromiumModule, puppeteerModule] = await Promise.all([
-        import('@sparticuz/chromium'),
-        import('puppeteer-core')
-      ]);
-      
+
+      // chromium-min package is optimized for serverless and has the binaries properly bundled
+      const chromiumModule = await import('@sparticuz/chromium-min');
+      const puppeteerModule = await import('puppeteer-core');
+
       // Access the default exports correctly
       chromium = chromiumModule.default || chromiumModule;
       puppeteer = puppeteerModule.default || puppeteerModule;
 
       logger.info(`[puppeteer-scraper] Packages imported successfully`, 'puppeteer-scraper');
 
-      // Get executable path from chromium
-      logger.info(`[puppeteer] Getting executable path...`, 'puppeteer-scraper');
+      // For chromium-min, you need to provide the binary location
+      // These are hosted on a CDN
+      const executablePath = await chromium.executablePath(
+        // 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+        'https://github.com/Sparticuz/chromium/releases/download/v140.0.0/chromium-v140.0.0-pack.x64.tar'
+      );
       
-      const executablePath = await chromium.executablePath();
       logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
 
       // Launch browser with proper configuration
       logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
       const browser = await puppeteer.launch({
-        headless: 'new',
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
         executablePath,
-        args: [
-          ...chromium.args,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--memory-pressure-off',
-          '--max_old_space_size=4096'
-        ]
+        headless: chromium.headless,
+        ignoreHTTPSErrors: true,
       });
 
-      logger.info(`[puppeteer-scraper] Browser launched successfully in production`, 'puppeteer-scraper');
+      logger.info(`[puppeteer-scraper] Browser launched successfully`, 'puppeteer-scraper');
       return browser;
       
     } catch (prodError: any) {
-      logger.error(`[puppeteer-scraper] Production browser setup failed: ${prodError.message}`, 'puppeteer-scraper');
-      logger.error(
-        `[puppeteer-scraper] Error details:`,
-        'puppeteer-scraper',
-        {
-          message: prodError.message,
-          stack: prodError.stack,
-          name: prodError.name
-        }
-      );
-      throw new Error(`Production browser setup failed: ${prodError.message || String(prodError)}`);
+      logger.error(`[puppeteer-scraper] Production setup failed: ${prodError.message}`, 'puppeteer-scraper');
+      logger.error(`[puppeteer-scraper] Error details:`, 'puppeteer-scraper', {
+        message: prodError.message,
+        stack: prodError.stack,
+        name: prodError.name
+      });
+      throw new Error(`Production browser setup failed: ${prodError.message}`);
     }
   } else {
     // Development environment
@@ -101,6 +86,7 @@ async function getBrowser() {
       
       const browser = await puppeteer.launch({
         headless: 'new',
+        ignoreHTTPSErrors: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -108,25 +94,24 @@ async function getBrowser() {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
           '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
         ]
       });
-      logger.info(`[puppeteer-scraper] Browser launched successfully in development`, 'puppeteer-scraper');
+      
+      logger.info(`[puppeteer-scraper] Browser launched successfully`, 'puppeteer-scraper');
       return browser;
       
     } catch (devError: any) {
-      logger.error(`[puppeteer-scraper] Development browser setup failed: ${devError.message}`, 'puppeteer-scraper');
-      throw new Error(`Development browser setup failed: ${devError.message || String(devError)}`);
+      logger.error(`[puppeteer-scraper] Development setup failed: ${devError.message}`, 'puppeteer-scraper');
+      throw new Error(`Development browser setup failed: ${devError.message}`);
     }
   }
 }
 
 export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeResult> {
-  const normalizedUrl =
-    url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+  const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') 
+    ? url 
+    : `https://${url}`;
 
   let lastError: any;
 
@@ -134,29 +119,8 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
     let browser: any | null = null;
 
     try {
-      logger.info(
-        `[puppeteer-scraper] attempt ${attempt}/${MAX_RETRIES} - ${normalizedUrl}`,
-      );
+      logger.info(`[puppeteer-scraper] Attempt ${attempt}/${MAX_RETRIES} - ${normalizedUrl}`);
 
-      console.log('[puppeteer-scraper] Environment check:', { 
-        NODE_ENV: process.env.NODE_ENV, 
-        VERCEL: process.env.VERCEL,
-        VERCEL_ENV: process.env.VERCEL_ENV 
-      });
-      logger.info(
-        `[puppeteer-scraper] Environment check`,
-        'puppeteer environment',
-        {
-          NODE_ENV: process.env.NODE_ENV,
-          VERCEL: process.env.VERCEL,
-          VERCEL_ENV: process.env.VERCEL_ENV,
-          platform: process.platform,
-          arch: process.arch,
-          timestamp: new Date().toISOString()
-        }
-      );
-
-      // Launch browser using the getBrowser function
       browser = await getBrowser();
       logger.info(`[puppeteer-scraper] Browser launched successfully`, 'puppeteer-scraper');
 
@@ -174,7 +138,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
       });
 
       const response = await page.goto(normalizedUrl, {
-        waitUntil: 'load',
+        waitUntil: 'networkidle0',
         timeout: 60_000,
       });
 
@@ -195,7 +159,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
         throw new Error('Yetersiz içerik kazındı. Sayfa düzgün yüklenmemiş olabilir.');
       }
 
-      // Fetch robots.txt and llms.txt using page.evaluate with fetch
+      // Fetch robots.txt and llms.txt
       const [robotsTxt, llmsTxt] = await Promise.all([
         (async () => {
           try {
@@ -235,13 +199,14 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
         () => JSON.parse(JSON.stringify(window.performance))
       );
 
-      logger.info(`[puppeteer-scraper] success - ${normalizedUrl}`);
+      logger.info(`[puppeteer-scraper] Success - ${normalizedUrl}`);
       
       return { html, content, robotsTxt, llmsTxt, performanceMetrics };
+      
     } catch (error: any) {
       lastError = error;
       logger.warn(
-        `[puppeteer-scraper] attempt ${attempt}/${MAX_RETRIES} failed - ${normalizedUrl}`,
+        `[puppeteer-scraper] Attempt ${attempt}/${MAX_RETRIES} failed - ${normalizedUrl}`,
         'puppeteer-scraper',
         { error: error?.message }
       );
@@ -252,8 +217,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
           `Alan adı çözümlenemedi: ${normalizedUrl}`,
           {
             contextData: { url: normalizedUrl, error: error.message },
-            userFriendlyMessage:
-              "Belirtilen alan adı bulunamadı. Lütfen URL'yi kontrol edip tekrar deneyin.",
+            userFriendlyMessage: "Belirtilen alan adı bulunamadı. Lütfen URL'yi kontrol edip tekrar deneyin.",
           }
         );
       }
@@ -265,10 +229,10 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
       try {
         if (browser) {
           await browser.close();
-          console.log('[puppeteer-scraper] Browser closed successfully');
+          logger.info(`[puppeteer-scraper] Browser closed successfully`, 'puppeteer-scraper');
         }
       } catch (closeError) {
-        console.error('[puppeteer-scraper] Error closing browser:', closeError);
+        logger.error(`[puppeteer-scraper] Error closing browser`, 'puppeteer-scraper', { error: closeError });
       }
     }
   }
@@ -278,8 +242,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
     `Puppeteer ile sayfa taranırken ${MAX_RETRIES} denemenin ardından bir hata oluştu: ${normalizedUrl}`,
     {
       contextData: { url: normalizedUrl, error: lastError?.message },
-      userFriendlyMessage:
-        'Web sitesi taranırken bir sorunla karşılaşıldı. Lütfen URL\'yi kontrol edip tekrar deneyin.',
+      userFriendlyMessage: 'Web sitesi taranırken bir sorunla karşılaşıldı. Lütfen URL\'yi kontrol edip tekrar deneyin.',
     }
   );
 }
