@@ -72,12 +72,32 @@ async function appendJobEvent(jobId: string, event: { step: string; status: 'STA
  */
 export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
   const { id, url } = job;
+
+
+  // Log environment info
+  logger.info(`[Orchestrator] Environment:`, 'orchestrateAnalysis', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL: process.env.VERCEL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
+    timestamp: new Date().toISOString()
+  });
+
   logger.info(`[Orchestrator] Analiz süreci başlatıldı: ${id} - ${url}`, 'orchestrateAnalysis');
+
+  // Add heartbeat logging to detect where it hangs
+  const heartbeat = setInterval(() => {
+    logger.info(`[Orchestrator] Heartbeat for job ${id} - still running...`, 'orchestrateAnalysis');
+  }, 5000);
 
   try {
     // Make sure DB connection is up
     await dbConnect();
+    logger.info(`[Orchestrator] DB connected`, 'orchestrateAnalysis');
+
     const existing = await AnalysisJobModel.findOne({ id }).lean();
+    logger.info(`[Orchestrator] Existing job status:`, 'orchestrateAnalysis', { status: existing?.status });
+
     if (existing?.status === 'COMPLETED' || existing?.status === 'FAILED') {
       logger.info(`[Orchestrator] Job ${id} is already ${existing.status}; skipping.`, 'orchestrateAnalysis');
       return;
@@ -201,5 +221,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
       `Analiz orkestrasyonu başarısız oldu: ${id}`,
       { originalError: error }
     );
+  } finally {
+    clearInterval(heartbeat);
   }
 }

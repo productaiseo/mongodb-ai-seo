@@ -11,7 +11,7 @@ import type { AnalysisJob } from '@/types/geo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // 60 seconds
+export const maxDuration = 300; // 300 seconds
 
 export async function POST(request: NextRequest) {
   try {

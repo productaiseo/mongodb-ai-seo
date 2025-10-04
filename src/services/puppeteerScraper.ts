@@ -13,10 +13,28 @@ let puppeteer: any;
 let chromium: any;
 
 async function getBrowser() {
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-    // Production environment (Vercel)
+
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+
+  logger.info(
+    `[puppeteer-scraper] Environment check`,
+    'puppeteer environment',
+    {
+      isProduction,
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      platform: process.platform,
+      arch: process.arch,
+      hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
+      timestamp: new Date().toISOString()
+    }
+  );
+
+  // Production environment (Vercel)
+  if (isProduction) {
     try {
-      console.log('[puppeteer-scraper] Setting up production browser...');
+      logger.info(`[puppeteer-scraper] Setting up production browser...`, 'puppeteer-scraper');
       
       // Import packages properly
       const [chromiumModule, puppeteerModule] = await Promise.all([
@@ -27,17 +45,21 @@ async function getBrowser() {
       // Access the default exports correctly
       chromium = chromiumModule.default || chromiumModule;
       puppeteer = puppeteerModule.default || puppeteerModule;
-      
-      console.log('[puppeteer-scraper] Packages imported successfully');
-      
+
+      logger.info(`[puppeteer-scraper] Packages imported successfully`, 'puppeteer-scraper');
+
       // Get executable path from chromium
-      const executablePath = await chromium.executablePath();
-      console.log('[puppeteer-scraper] Executable path:', executablePath);
+      logger.info(`[puppeteer] Getting executable path...`, 'puppeteer-scraper');
       
+      const executablePath = await chromium.executablePath();
+      logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
+
       // Launch browser with proper configuration
+      logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
       const browser = await puppeteer.launch({
-        headless: 'new',
+        headless: chromium.headless, // for better compatibility
         executablePath,
+        ignoreHTTPSErrors: true,
         args: [
           ...chromium.args,
           '--no-sandbox',
@@ -46,7 +68,6 @@ async function getBrowser() {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
           '--disable-gpu',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor',
@@ -54,29 +75,34 @@ async function getBrowser() {
           '--max_old_space_size=4096'
         ]
       });
-      
-      console.log('[puppeteer-scraper] Browser launched successfully in production');
+
+      logger.info(`[puppeteer-scraper] Browser launched successfully in production`, 'puppeteer-scraper');
       return browser;
       
     } catch (prodError: any) {
-      console.error('[puppeteer-scraper] Production browser setup failed:', prodError);
-      console.error('[puppeteer-scraper] Error details:', {
-        message: prodError.message,
-        stack: prodError.stack,
-        name: prodError.name
-      });
+      logger.error(`[puppeteer-scraper] Production browser setup failed: ${prodError.message}`, 'puppeteer-scraper');
+      logger.error(
+        `[puppeteer-scraper] Error details:`,
+        'puppeteer-scraper',
+        {
+          message: prodError.message,
+          stack: prodError.stack,
+          name: prodError.name
+        }
+      );
       throw new Error(`Production browser setup failed: ${prodError.message || String(prodError)}`);
     }
   } else {
     // Development environment
     try {
-      console.log('[puppeteer-scraper] Setting up development browser...');
-      
+      logger.info(`[puppeteer-scraper] Setting up development browser...`, 'puppeteer-scraper');
+
       const puppeteerModule = await import('puppeteer');
       puppeteer = puppeteerModule.default || puppeteerModule;
       
       const browser = await puppeteer.launch({
         headless: 'new',
+        ignoreHTTPSErrors: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -84,18 +110,16 @@ async function getBrowser() {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
           '--disable-gpu',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor'
         ]
       });
-      
-      console.log('[puppeteer-scraper] Browser launched successfully in development');
+      logger.info(`[puppeteer-scraper] Browser launched successfully in development`, 'puppeteer-scraper');
       return browser;
       
     } catch (devError: any) {
-      console.error('[puppeteer-scraper] Development browser setup failed:', devError);
+      logger.error(`[puppeteer-scraper] Development browser setup failed: ${devError.message}`, 'puppeteer-scraper');
       throw new Error(`Development browser setup failed: ${devError.message || String(devError)}`);
     }
   }
@@ -120,10 +144,23 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
         VERCEL: process.env.VERCEL,
         VERCEL_ENV: process.env.VERCEL_ENV 
       });
+      logger.info(
+        `[puppeteer-scraper] Environment check`,
+        'puppeteer environment',
+        {
+          NODE_ENV: process.env.NODE_ENV,
+          VERCEL: process.env.VERCEL,
+          VERCEL_ENV: process.env.VERCEL_ENV,
+          platform: process.platform,
+          arch: process.arch,
+          hasInternalToken: !!process.env.INTERNAL_API_TOKEN,
+          timestamp: new Date().toISOString()
+        }
+      );
 
       // Launch browser using the getBrowser function
       browser = await getBrowser();
-      console.log('[puppeteer-scraper] Browser launched successfully');
+      logger.info(`[puppeteer-scraper] Browser launched successfully`, 'puppeteer-scraper');
 
       const page = await browser.newPage();
 
@@ -202,8 +239,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
 
       logger.info(`[puppeteer-scraper] success - ${normalizedUrl}`);
 
-      console.log('[puppeteer-scraper] content length:', content);
-      console.log('[puppeteer-scraper] html length:', html);
+      console.log('content:', content)
       
       return { html, content, robotsTxt, llmsTxt, performanceMetrics };
     } catch (error: any) {
