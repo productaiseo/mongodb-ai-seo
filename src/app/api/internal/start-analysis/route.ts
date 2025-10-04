@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       finalGeoScore: null,
     } as AnalysisJob;
 
-    // --- Fire and return early (do not await long-running orchestration) ---
+    // Fire and return early (do not await long-running orchestration)
     orchestrateAnalysis(job).catch((error: any) => {
       logger.error?.('orchestrateAnalysis failed (detached)', 'internal-start-analysis', { error });
     });
