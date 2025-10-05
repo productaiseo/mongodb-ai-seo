@@ -48,7 +48,6 @@ async function getBrowser() {
       // For chromium-min, you need to provide the binary location
       // These are hosted on a CDN
       const executablePath = await chromium.executablePath(
-        // 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
         'https://github.com/Sparticuz/chromium/releases/download/v140.0.0/chromium-v140.0.0-pack.x64.tar'
       );
       
