@@ -5,6 +5,7 @@ import { FiTrendingUp, FiAlertTriangle, FiAward,
  } from 'react-icons/fi';
 import MetricCard from '@/components/ui/MetricCard';
 import { GeoScore } from '@/types/geo';
+import Link from 'next/link';
 
 
 interface EnhancedGeoScoreOverviewProps {
@@ -97,9 +98,15 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
             {interpretation}
           </motion.div>
           <p className="text-sm text-white/70 mt-4 text-center">Daha yüksek bir skor için potansiyelinizi bizimle keşfedin.</p>
-          <button className="mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-8 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
-            İletişime Geç
-          </button>
+          <Link 
+            href="https://api.whatsapp.com/send/?phone=905421386574"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button className="mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-8 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
+              İletişime Geç
+            </button>
+          </Link>
         </div>
       </div>
       <div>
