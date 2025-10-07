@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
@@ -43,12 +42,11 @@ const Navbar = () => {
           <Logo variant="header" />
           <div className="flex items-center gap-6">
             <Link href="/features" className="text-white/80 hover:text-white transition-colors">
-              Özellikler
+              {t('NavFeatures')}
             </Link>
             <Link href="/about" className="text-white/80 hover:text-white transition-colors">
-              Nasıl Çalışır
+              {t('NavHowItWorks')}
             </Link>
-
             <button
               onClick={() => changeLocale("en")}
               className={`border p-2 font-bold rounded-md text-sm ${

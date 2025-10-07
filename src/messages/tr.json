@@ -5,6 +5,7 @@
   "HomePage": {
     "title": "Web siteniz AI aramalarında görünür mü?",
     "heroText": "Yapay zeka arama motorları geleneksel aramalardan farklı çalışır. Yeni arama akışında görünürlüğünüzü kaybetmek, trafiğinizin %30-40'ını kaybetmek anlamına gelebilir.",
-    "lang": "Türkçe"
+    "NavFeatures": "Özellikler",
+    "NavHowItWorks": "Nasıl Çalışır"
   }
 }
