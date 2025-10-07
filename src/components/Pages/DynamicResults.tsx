@@ -139,7 +139,7 @@ const DomainResultsPage = ({ domain }: Props) => {
 
   const progress = jobStatus === 'COMPLETED'
     ? 100
-    : (jobStatusSteps.findIndex(s => s.status === jobStatus) / (jobStatusSteps.length - 1)) * 100 || 0;
+    : Math.floor((jobStatusSteps.findIndex(s => s.status === jobStatus) / (jobStatusSteps.length - 1)) * 100) || 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-950 text-white">
