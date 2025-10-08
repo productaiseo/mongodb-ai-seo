@@ -6,6 +6,24 @@
     "title": "Does your website appear in AI searches?",
     "heroText": "AI search engines work differently than traditional search engines. Losing visibility in the new search stream could mean losing 30-40% of your traffic.",
     "NavFeatures": "Features",
-    "NavHowItWorks": "How It Works"
+    "NavHowItWorks": "How It Works",
+    "Features": {
+      "feature1": {
+        "title": "AI Visibility Analysis",
+        "description": "Check how your site appears in all AI tools like ChatGPT, Bing AI, and Google."
+      },
+      "feature2": {
+        "title": "Improvement Recommendations",
+        "description": "Get site-specific optimization suggestions to improve visibility in AI searches."
+      },
+      "feature3": {
+        "title": "Regular Reports",
+        "description": "Regularly monitor your site's performance in AI tools and see your progress."
+      }
+    },
+    "UrlForm": {
+      "placeholder": "Enter your website URL",
+      "startButton": "Start Analysis"
+    }
   }
 }

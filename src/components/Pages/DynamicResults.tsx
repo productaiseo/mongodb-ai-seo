@@ -8,7 +8,6 @@ import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 import ReportHeader from '@/components/Reports/ReportHeader';
 import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
-import DebugBox from '@/components/DebugBox';
 import { AnalysisJob } from '@/types/geo';
 // import { auth } from '@/lib/firebase';
 // import { useAuth } from '@/contexts/AuthContext';
@@ -152,7 +151,7 @@ const DomainResultsPage = ({ domain }: Props) => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">{domain} için GEO raporu hazırlanıyor...</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">{plainDomain} için GEO raporu hazırlanıyor...</h1>
               <ProgressAnimation steps={getCurrentStep()} progress={progress} />
             </motion.div>
           )}
@@ -195,7 +194,6 @@ const DomainResultsPage = ({ domain }: Props) => {
               </motion.div>
 
               <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                <DebugBox data={geoReport} />
               </motion.div>
             </motion.div>
           )}

@@ -3,8 +3,13 @@
 import React, { useState, useRef } from "react";
 import { FiSearch, FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+
 
 const UrlForm = () => {
+
+  const t = useTranslations("HomePage");
+  
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -60,7 +65,7 @@ const UrlForm = () => {
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Web site URL'nizi girin..."
+            placeholder={t("UrlForm.placeholder")}
             className="w-full py-4 pl-12 pr-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-white placeholder-white/50"
           />
         </div>
@@ -75,7 +80,7 @@ const UrlForm = () => {
             <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
           ) : (
             <>
-              <span>Analizi Başlat</span>
+              <span>{t("UrlForm.startButton")}</span>
               <FiArrowRight className="ml-2" />
             </>
           )}

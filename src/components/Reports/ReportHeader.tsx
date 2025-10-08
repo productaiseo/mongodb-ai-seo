@@ -11,7 +11,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ domain, analysisDate }) => 
   return (
     <div className="flex flex-col md:flex-row justify-between md:items-center p-4 bg-blue-900/50 rounded-lg border border-blue-800/50">
       <div>
-        <h1 className="text-2xl font-bold text-white">SEO Raporu: {domain}</h1>
+        <h1 className="text-2xl font-bold text-white">GEO Raporu: {domain}</h1>
         <p className="text-sm text-white/70">Analiz Tarihi: {analysisDate}</p>
       </div>
       <div className="flex items-center gap-4 mt-4 md:mt-0">
