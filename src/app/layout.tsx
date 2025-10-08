@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import {NextIntlClientProvider} from 'next-intl';
+import { getLocale, getMessages } from "next-intl/server";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +14,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_URL}`),
@@ -48,17 +52,23 @@ export const metadata: Metadata = {
   }
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+
+type Props = {
   children: React.ReactNode;
-}>) {
+};
+
+
+export default async function RootLayout({children}: Readonly<Props>) {
+
+  const messages = await getMessages();
+  const locale = await getLocale();
+
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang={locale}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

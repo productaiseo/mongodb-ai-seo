@@ -1,0 +1,29 @@
+{
+  "TabTitles": {
+    "home": "AiSEO - AI Arama Görünürlük Kontrolü"
+  },
+  "HomePage": {
+    "title": "Web siteniz AI aramalarında görünür mü?",
+    "heroText": "Yapay zeka arama motorları geleneksel aramalardan farklı çalışır. Yeni arama akışında görünürlüğünüzü kaybetmek, trafiğinizin %30-40'ını kaybetmek anlamına gelebilir.",
+    "NavFeatures": "Özellikler",
+    "NavHowItWorks": "Nasıl Çalışır",
+    "Features": {
+      "feature1": {
+        "title": "AI Görünürlük Analizi",
+        "description": "Sitenizin ChatGPT, Bing AI ve Google gibi tüm AI araçlarında nasıl göründüğünü kontrol edin."
+      },
+      "feature2": {
+        "title": "İyileştirme Tavsiyeleri",
+        "description": "AI aramalarında daha iyi görünmek için sitenize özel optimizasyon önerileri alın."
+      },
+      "feature3": {
+        "title": "Düzenli Raporlar",
+        "description": "Sitenizin AI araçlarındaki performansını düzenli olarak takip edin ve gelişiminizi görün."
+      }
+    },
+    "UrlForm": {
+      "placeholder": "Web sitenizin URL'sini girin",
+      "startButton": "Analizi Başlat"
+    }
+  }
+}
