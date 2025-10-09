@@ -1,4 +1,4 @@
-import React from 'react';
+import { useTranslations } from "next-intl";
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiAlertTriangle, FiAward,
   // FiUsers, FiBarChart2, 
@@ -67,6 +67,9 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
   executiveSummary,
   geoScoreDetails,
 }) => {
+
+  const t = useTranslations("ResultsPage");
+
   const interpretationIcons: { [key: string]: React.ReactNode } = {
     Zayıf: <FiAlertTriangle className="mr-2" />,
     Gelişmekte: <FiTrendingUp className="mr-2" />,
@@ -75,7 +78,7 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
 
   return (
     <div className="bg-blue-900/30 backdrop-blur-md rounded-xl p-6 border border-blue-800/30 space-y-6 h-full flex flex-col">
-      <h2 className="text-2xl font-bold text-white">Genel GEO Değerlendirmesi</h2>
+      <h2 className="text-2xl font-bold text-white">{t('sections.overview.subTitle')}</h2>
       <div className="flex items-center gap-6">
         <div className="flex-shrink-0">
           <Gauge score={score} />

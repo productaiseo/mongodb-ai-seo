@@ -3,12 +3,14 @@
 import React from 'react';
 import { DelfiAgenda as DelfiAgendaType } from '@/types/geo';
 import { FiTarget, FiList, FiHelpCircle, FiArrowRightCircle } from 'react-icons/fi';
+import { useTranslations } from 'next-intl';
 
 interface DelfiAgendaProps {
   report: DelfiAgendaType;
 }
 
 const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
+  const t = useTranslations("ResultsPage");
   if (!report) return null;
 
   return (
@@ -16,7 +18,7 @@ const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
       <div>
         <h3 className="flex items-center text-xl font-bold text-white mb-3">
           <FiTarget className="mr-2 text-cyan-400" />
-          <span>Stratejik Odak</span>
+          <span>{t('sections.strategicGrowth.subTitle')}</span>
         </h3>
         <p className="text-white/80 bg-blue-900/30 p-4 rounded-lg border border-blue-800/30">{report.oturumOdagi}</p>
       </div>

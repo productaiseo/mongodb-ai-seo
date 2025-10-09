@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PillarPerformanceChart from '@/components/Dashboard/PillarPerformanceChart';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Modal from '@/components/ui/Modal';
+import { useTranslations } from 'next-intl';
 
 
 interface MetricDetailCardProps {
@@ -184,6 +185,8 @@ interface PrometheusReportProps {
 }
 
 const PrometheusReport: React.FC<PrometheusReportProps> = ({ report }) => {
+
+  const t = useTranslations("ResultsPage");
   if (!report) return null;
 
   const pillarKeys = Object.keys(report.pillars);
@@ -209,7 +212,7 @@ const PrometheusReport: React.FC<PrometheusReportProps> = ({ report }) => {
         <div className="flex justify-between items-center mb-3">
           <h3 className="flex items-center text-xl font-bold text-white">
             <FiTrendingUp className="mr-2 text-cyan-400" />
-            <span>GEO Direkleri Performansı</span>
+            <span>{t('sections.geoPerformance.subTitle')}</span>
           </h3>
           <button
             onClick={handleToggleAll}

@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from "next-intl";
 import { FiTrendingUp, FiLayout, FiBarChart2, FiFileText, FiZap, FiShield } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import PrometheusReportComponent from '@/components/Reports/PrometheusReport';
@@ -23,6 +24,8 @@ interface ReportTabsProps {
 
 
 const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
+
+  const t = useTranslations("ResultsPage");
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const {
@@ -34,12 +37,11 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
   } = jobReport;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Genel Bakış', icon: <FiLayout /> },
-    { id: 'prometheus', label: 'Teknik GEO Performansı', icon: <FiBarChart2 /> },
-    { id: 'arkhe', label: 'Pazar ve Rakip Analizi', icon: <FiShield /> },
-    { id: 'delfi', label: 'Stratejik Büyüme Planı', icon: <FiFileText /> },
-    // { id: 'strategic', label: 'Stratejik Etki & ROI', icon: <FiTrendingUp /> },
-    { id: 'generative', label: 'Üretken Performans', icon: <FiZap /> },
+    { id: 'overview', label: t('sections.overview.tabTitle'), icon: <FiLayout /> },
+    { id: 'prometheus', label: t('sections.geoPerformance.tabTitle'), icon: <FiBarChart2 /> },
+    { id: 'arkhe', label: t('sections.marketAnalysis.tabTitle'), icon: <FiShield /> },
+    { id: 'delfi', label: t('sections.strategicGrowth.tabTitle'), icon: <FiFileText /> },
+    { id: 'generative', label: t('sections.generativePerformance.tabTitle'), icon: <FiZap /> },
   ];
 
   const renderContent = () => {
@@ -120,7 +122,7 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
               key={tab?.id}
               onClick={() => setActiveTab(tab?.id)}
               className={`${
-                activeTab === tab.id
+                activeTab === tab?.id
                   ? 'border-cyan-400 text-cyan-300'
                   : 'border-transparent text-white/60 hover:text-white hover:border-blue-600/80'
               } flex items-center whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}

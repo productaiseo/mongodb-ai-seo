@@ -24,6 +24,51 @@
     "UrlForm": {
       "placeholder": "Enter your website URL",
       "startButton": "Start Analysis"
+    },
+    "steps": {
+      "QUEUED": "Analysis Starting...",
+      "PROCESSING_SCRAPE": "Data Collection (Scraping)...",
+      "PROCESSING_PSI": "Performance Analysis (PSI)...",
+      "PROCESSING_ARKHE": "Market and Competitor Analysis...",
+      "PROCESSING_PROMETHEUS": "GEO Performance Report Generation...",
+      "PROCESSING_LIR": "Strategic Roadmap Preparation...",
+      "PROCESSING_GENERATIVE_PERFORMANCE": "Generative Performance Report Generation...",
+      "COMPLETED": "Report Completed",
+      "FAILED": "Analysis Failed"
+    },
+    "errors": {
+      "startFailed": "Analysis could not be started.",
+      "unexpected": "An unexpected error occurred.",
+      "statusFailed": "Job status could not be retrieved.",
+      "duringStatus": "Error occurred during status check."
+    }
+  },
+  "ResultsPage": {
+    "title": "GEO Report",
+    "analysisDate": "Analysis Date",
+    "downloadReport": "Download Report",
+    "sections": {
+      "starting": "Preparing GEO report for...",
+      "overview": {
+        "tabTitle": "Overview",
+        "subTitle": "General GEO Assessment"
+      },
+      "geoPerformance": {
+        "tabTitle": "Technical GEO Performance",
+        "subTitle": "Performance of GEO Pillars"
+      },
+      "marketAnalysis": {
+        "tabTitle": "Market & Competitor Analysis",
+        "subTitle": "Business Model & Revenue Streams"
+      },
+      "strategicGrowth": {
+        "tabTitle": "Strategic Growth Plan",
+        "subTitle": "Strategic Focus"
+      },
+      "generativePerformance": {
+        "tabTitle": "Generative Performance",
+        "subTitle": "Generative Performance Report"
+      }
     }
   }
 }

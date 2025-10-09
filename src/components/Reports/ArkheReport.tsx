@@ -5,6 +5,7 @@ import { ArkheReport as ArkheReportType } from '@/types/geo';
 import InteractiveDataTable from '@/components/ui/InteractiveDataTable';
 import MetricCard from '@/components/ui/MetricCard';
 import { FiBriefcase, FiUsers, FiBarChart, FiFileText, FiTrendingUp } from 'react-icons/fi';
+import { useTranslations } from 'next-intl';
 
 
 interface ArkheReportProps {
@@ -13,6 +14,7 @@ interface ArkheReportProps {
 
 
 const ArkheReport: React.FC<ArkheReportProps> = ({ report }) => {
+  const t = useTranslations("ResultsPage");
   if (!report) return null;
 
   const businessCompetitorsColumns = [
@@ -41,7 +43,7 @@ const ArkheReport: React.FC<ArkheReportProps> = ({ report }) => {
         <div className="bg-blue-900/30 rounded-lg border border-blue-800/30 p-4 h-full flex flex-col">
           <div className="flex items-center text-lg font-bold text-white mb-3">
             <FiBriefcase className="mr-2 text-cyan-400" />
-            <span>İş Modeli ve Gelir Akışları</span>
+            <span>{t('sections.marketAnalysis.subTitle')}</span>
           </div>
           <MetricCard
             title="İş Modeli Tipi"

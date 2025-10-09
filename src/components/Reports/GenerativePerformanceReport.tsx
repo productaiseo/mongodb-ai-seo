@@ -4,6 +4,7 @@ import React from 'react';
 import { GenerativePerformanceReport as GenerativePerformanceReportType } from '@/types/geo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { FiShare2, FiLink, FiSmile, FiAlertTriangle } from 'react-icons/fi';
+import { useTranslations } from 'next-intl';
 
 interface GenerativePerformanceReportProps {
   report: GenerativePerformanceReportType;
@@ -25,6 +26,7 @@ const MetricCard = ({ title, icon, value, unit, children }: { title: string, ico
 );
 
 const GenerativePerformanceReport: React.FC<GenerativePerformanceReportProps> = ({ report }) => {
+  const t = useTranslations("ResultsPage");
   if (!report) {
     return <p>Üretken Performans Raporu mevcut değil.</p>;
   }
@@ -33,8 +35,8 @@ const GenerativePerformanceReport: React.FC<GenerativePerformanceReportProps> = 
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-cyan-400">Üretken Performans Raporu</h2>
-      
+      <h2 className="text-2xl font-bold text-cyan-400">{t('sections.generativePerformance.subTitle')}</h2>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Üretken Ses Payı" icon={<FiShare2 className="h-4 w-4 text-white/60" />} value={shareOfGenerativeVoice.score.toFixed(1)} unit="%">
           <p className="text-xs text-white/60">AI yanıtlarındaki marka bahsedilmelerine dayanmaktadır.</p>
