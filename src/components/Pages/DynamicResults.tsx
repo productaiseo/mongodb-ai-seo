@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslations } from "next-intl";
+
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 // import { useParams } from 'next/navigation';
 import ReportHeader from '@/components/Reports/ReportHeader';
@@ -13,23 +14,14 @@ import { AnalysisJob } from '@/types/geo';
 // import { useAuth } from '@/contexts/AuthContext';
 
 
-const jobStatusSteps = [
-  { id: '1', label: 'Analiz Başlatılıyor...', status: 'QUEUED' },
-  { id: '2', label: 'Veri Toplama (Tarama)...', status: 'PROCESSING_SCRAPE' },
-  { id: '3', label: 'Performans Analizi (PSI)...', status: 'PROCESSING_PSI' },
-  { id: '4', label: 'Pazar ve Rakip Analizi Yapılıyor...', status: 'PROCESSING_ARKHE' },
-  { id: '5', label: 'GEO Performans Raporu Oluşturuluyor...', status: 'PROCESSING_PROMETHEUS' },
-  { id: '6', label: 'Stratejik Yol Haritası Hazırlanıyor...', status: 'PROCESSING_LIR' },
-  { id: '7', label: 'Üretken Performans Raporu Oluşturuluyor...', status: 'PROCESSING_GENERATIVE_PERFORMANCE' },
-  { id: '8', label: 'Rapor Tamamlandı', status: 'COMPLETED' },
-];
-
-
 interface Props {
     domain: string;
 }
 
 const DomainResultsPage = ({ domain }: Props) => {
+
+  const t = useTranslations("HomePage");
+  const l = useTranslations("ResultsPage");
     
   const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
@@ -37,6 +29,18 @@ const DomainResultsPage = ({ domain }: Props) => {
   const [jobStatus, setJobStatus] = useState<string | null>('QUEUED');
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
+
+  // Build steps with localized labels
+  const jobStatusSteps = useMemo(() => ([
+    { id: '1', label: t('steps.QUEUED'), status: 'QUEUED' },
+    { id: '2', label: t('steps.PROCESSING_SCRAPE'), status: 'PROCESSING_SCRAPE' },
+    { id: '3', label: t('steps.PROCESSING_PSI'), status: 'PROCESSING_PSI' },
+    { id: '4', label: t('steps.PROCESSING_ARKHE'), status: 'PROCESSING_ARKHE' },
+    { id: '5', label: t('steps.PROCESSING_PROMETHEUS'), status: 'PROCESSING_PROMETHEUS' },
+    { id: '6', label: t('steps.PROCESSING_LIR'), status: 'PROCESSING_LIR' },
+    { id: '7', label: t('steps.PROCESSING_GENERATIVE_PERFORMANCE'), status: 'PROCESSING_GENERATIVE_PERFORMANCE' },
+    { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
+  ]), [t]);
 
   // const { isAuthenticated, isLoading } = useAuth();
 
@@ -151,7 +155,7 @@ const DomainResultsPage = ({ domain }: Props) => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">{plainDomain} için GEO raporu hazırlanıyor...</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">{plainDomain} {l('sections.starting')} </h1>
               <ProgressAnimation steps={getCurrentStep()} progress={progress} />
             </motion.div>
           )}
@@ -172,16 +176,6 @@ const DomainResultsPage = ({ domain }: Props) => {
                 <ReportTabs jobReport={geoReport} />
               </motion.div>
 
-              {/* Enhanced Analysis (if present) */}
-              { (geoReport as any).enhancedAnalysis && (
-                <motion.div className="bg-blue-900/30 p-4 rounded-lg" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                  <h2 className="text-xl font-bold mb-2">Gelişmiş Analiz</h2>
-                  <pre className="whitespace-pre-wrap text-white/80 text-sm overflow-auto max-h-80">
-                    {JSON.stringify((geoReport as any).enhancedAnalysis, null, 2)}
-                  </pre>
-                </motion.div>
-              )}
-
               <motion.div className="text-center" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <button
                   onClick={() => { if (jobId) window.open(`/api/export-report?jobId=${encodeURIComponent(jobId)}`, '_blank'); }}
@@ -189,7 +183,7 @@ const DomainResultsPage = ({ domain }: Props) => {
                   className="mt-4 md:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 mx-auto"
                 >
                   <FiDownload />
-                  <span>Raporu indir</span>
+                  <span>{l('downloadReport')}</span>
                 </button>
               </motion.div>
 

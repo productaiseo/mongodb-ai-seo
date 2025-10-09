@@ -24,6 +24,51 @@
     "UrlForm": {
       "placeholder": "Web sitenizin URL'sini girin",
       "startButton": "Analizi Başlat"
+    },
+    "steps": {
+      "QUEUED": "Analiz Başlatılıyor...",
+      "PROCESSING_SCRAPE": "Veri Toplama (Tarama)...",
+      "PROCESSING_PSI": "Performans Analizi (PSI)...",
+      "PROCESSING_ARKHE": "Pazar ve Rakip Analizi Yapılıyor...",
+      "PROCESSING_PROMETHEUS": "GEO Performans Raporu Oluşturuluyor...",
+      "PROCESSING_LIR": "Stratejik Yol Haritası Hazırlanıyor...",
+      "PROCESSING_GENERATIVE_PERFORMANCE": "Üretken Performans Raporu Oluşturuluyor...",
+      "COMPLETED": "Rapor Tamamlandı",
+      "FAILED": "Analiz başarısız"
+    },
+    "errors": {
+      "startFailed": "Analiz başlatılamadı.",
+      "unexpected": "Beklenmeyen bir hata oluştu.",
+      "statusFailed": "İş durumu alınamadı.",
+      "duringStatus": "Durum kontrolü sırasında hata."
+    }
+  },
+  "ResultsPage": {
+    "title": "GEO Raporu",
+    "analysisDate": "Analiz Tarihi",
+    "downloadReport": "Raporu İndir",
+    "sections": {
+      "starting": "için GEO raporu hazırlanıyor...",
+      "overview": {
+        "tabTitle": "Genel Bakış",
+        "subTitle": "Genel GEO Değerlendirmesi"
+      },
+      "geoPerformance": {
+        "tabTitle": "Teknik GEO Performansı",
+        "subTitle": "GEO Direkleri Performansı"
+      },
+      "marketAnalysis": {
+        "tabTitle": "Pazar ve Rakip Analizi",
+        "subTitle": "İş Modeli ve Gelir Akışları"
+      },
+      "strategicGrowth": {
+        "tabTitle": "Stratejik Büyüme Planı",
+        "subTitle": "Stratejik Odak"
+      },
+      "generativePerformance": {
+        "tabTitle": "Üretken Performans",
+        "subTitle": "Üretken Performans Raporu"
+      }
     }
   }
 }
