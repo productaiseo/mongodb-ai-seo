@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { FiShare2, FiSettings, FiDownload } from 'react-icons/fi';
+// import { FiShare2, FiSettings, FiDownload } from 'react-icons/fi';
 
 export interface ReportHeaderProps {
   domain: string;
@@ -16,6 +16,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ domain, analysisDate }) => 
         <h1 className="text-2xl font-bold text-white">{t("title")}: {domain}</h1>
         <p className="text-sm text-white/70">{t("analysisDate")}: {analysisDate}</p>
       </div>
+{/* 
       <div className="flex items-center gap-4 mt-4 md:mt-0">
         <button className="flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
           <FiDownload />
@@ -28,6 +29,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ domain, analysisDate }) => 
           <FiSettings />
         </button>
       </div>
+*/}
     </div>
   );
 };

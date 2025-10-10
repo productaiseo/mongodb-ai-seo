@@ -17,6 +17,9 @@ interface EnhancedGeoScoreOverviewProps {
 
 
 const Gauge: React.FC<{ score: number }> = ({ score }) => {
+
+  const t = useTranslations("ResultsPage");
+
   const circumference = 2 * Math.PI * 45;
   const offset = circumference - (score / 100) * circumference;
 
@@ -55,7 +58,7 @@ const Gauge: React.FC<{ score: number }> = ({ score }) => {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-4xl font-bold">{score}</span>
-        <span className="text-sm text-white/70">GEO Skoru</span>
+        <span className="text-sm text-white/70">{t('sections.overview.geoScore')}</span>
       </div>
     </div>
   );
@@ -100,45 +103,45 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
             {interpretationIcons[interpretation]}
             {interpretation}
           </motion.div>
-          <p className="text-sm text-white/70 mt-4 text-center">Daha yüksek bir skor için potansiyelinizi bizimle keşfedin.</p>
+          <p className="text-sm text-white/70 mt-4 text-center">{t('contactDescription')}</p>
           <Link 
             href="https://api.whatsapp.com/send/?phone=905421386574"
             target="_blank"
             rel="noopener noreferrer"
           >
             <button className="mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-8 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
-              İletişime Geç
+              {t('contactUs')}
             </button>
           </Link>
         </div>
       </div>
       <div>
-        <h3 className="font-semibold text-lg mb-2">Yönetici Özeti</h3>
+        <h3 className="font-semibold text-lg mb-2">{t('sections.overview.sections.executiveSummary.title')}</h3>
         <p className="text-white/80 text-base">{executiveSummary}</p>
       </div>
       {geoScoreDetails && (
         <div className="grid grid-cols-2 gap-4 pt-6 border-t border-blue-800/30">
           <MetricCard 
-            title="Pazar Potansiyeli"
+            title={t('sections.overview.sections.marketPotential.title')}
             value={geoScoreDetails.pazarPotansiyeli ? geoScoreDetails.pazarPotansiyeli.charAt(0).toUpperCase() + geoScoreDetails.pazarPotansiyeli.slice(1) : 'N/A'}
             trend={geoScoreDetails.buyumeTrendi}
-            description="Pazarın mevcut büyüklüğü ve çekiciliği."
+            description={t('sections.overview.sections.marketPotential.description')}
           />
           <MetricCard 
-            title="Rekabet Yoğunluğu"
+            title={t('sections.overview.sections.competitionIntensity.title')}
             value={geoScoreDetails.rekabetYogunlugu ? geoScoreDetails.rekabetYogunlugu.charAt(0).toUpperCase() + geoScoreDetails.rekabetYogunlugu.slice(1) : 'N/A'}
-            description="Pazardaki rakip sayısı ve gücü."
+            description={t('sections.overview.sections.competitionIntensity.description')}
           />
           <MetricCard 
-            title="Büyüme Trendi"
+            title={t('sections.overview.sections.growthTrend.title')}
             value={geoScoreDetails.buyumeTrendi ? geoScoreDetails.buyumeTrendi.charAt(0).toUpperCase() + geoScoreDetails.buyumeTrendi.slice(1) : 'N/A'}
             trend={geoScoreDetails.buyumeTrendi}
-            description="Pazarın gelecekteki büyüme beklentisi."
+            description={t('sections.overview.sections.growthTrend.description')}
           />
           <MetricCard 
-            title="Marka Bilinirliği"
+            title={t('sections.overview.sections.brandAwareness.title')}
             value={geoScoreDetails.markaBilinirligi ? geoScoreDetails.markaBilinirligi.charAt(0).toUpperCase() + geoScoreDetails.markaBilinirligi.slice(1) : 'N/A'}
-            description="Markanın pazardaki tanınırlığı."
+            description={t('sections.overview.sections.brandAwareness.description')}
           />
         </div>
       )}
