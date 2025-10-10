@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PrometheusReportComponent from '@/components/Reports/PrometheusReport';
 import ArkheReportComponent from '@/components/Reports/ArkheReport';
 import DelfiAgendaComponent from '@/components/Reports/DelfiAgenda';
-// import StrategicImpactReportComponent from '@/components/Reports/StrategicImpactReport';
+import StrategicImpactReportComponent from '@/components/Reports/StrategicImpactReport';
 import GenerativePerformanceReport from '@/components/Reports/GenerativePerformanceReport';
 import EnhancedGeoScoreOverview from '@/components/Dashboard/EnhancedGeoScoreOverview';
 import ImpactfulActionPlan from '@/components/Dashboard/ImpactfulActionPlan';
@@ -96,13 +96,13 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
             <div>Stratejik Büyüme Planı verileri yüklenemedi.</div>
           ) : null}
 
-{/* 
+
           {activeTab === 'strategic' && strategicImpactForecast ? (
             <StrategicImpactReportComponent report={strategicImpactForecast} />
           ) : activeTab === 'strategic' && !strategicImpactForecast ? (
             <div>Stratejik Etki & ROI verileri yüklenemedi.</div>
           ) : null}
-*/}
+
           {activeTab === 'generative' && generativePerformanceReport ? (
             <GenerativePerformanceReport report={generativePerformanceReport} />
           ) : activeTab === 'generative' && !generativePerformanceReport ? (

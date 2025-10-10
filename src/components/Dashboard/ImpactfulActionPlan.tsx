@@ -11,9 +11,9 @@ interface ImpactfulActionPlanProps {
 
 
 const priorityStyles = {
-  high: { icon: <FiZap className="text-red-400" />, text: 'Yüksek Öncelik', bg: 'bg-red-900/30', border: 'border-red-500/50' },
-  medium: { icon: <FiTool className="text-yellow-400" />, text: 'Orta Öncelik', bg: 'bg-yellow-900/30', border: 'border-yellow-500/50' },
-  low: { icon: <FiBarChart2 className="text-green-400" />, text: 'Düşük Öncelik', bg: 'bg-green-900/30', border: 'border-green-500/50' },
+  high: { icon: <FiZap className="text-red-400" />, bg: 'bg-red-900/30', border: 'border-red-500/50' },
+  medium: { icon: <FiTool className="text-yellow-400" />, bg: 'bg-yellow-900/30', border: 'border-yellow-500/50' },
+  low: { icon: <FiBarChart2 className="text-green-400" />, bg: 'bg-green-900/30', border: 'border-green-500/50' },
 };
 
 const ImpactfulActionPlan: React.FC<ImpactfulActionPlanProps> = ({ actionPlan }) => {
@@ -37,7 +37,7 @@ const ImpactfulActionPlan: React.FC<ImpactfulActionPlanProps> = ({ actionPlan })
 
   return (
     <div className="bg-blue-900/30 backdrop-blur-md rounded-xl p-6 border border-blue-800/30 h-full flex flex-col">
-      <h2 className="text-2xl font-bold text-white mb-4">Önerilen Aksiyon Planı</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">{t('sections.overview.sectionAction.recommendedAction.title')}</h2>
       <div className="space-y-4 overflow-y-auto pr-2 modern-scrollbar flex-grow min-h-[450px]">
         {sortedPlan?.map((item, index) => (
           <motion.div
@@ -50,24 +50,26 @@ const ImpactfulActionPlan: React.FC<ImpactfulActionPlanProps> = ({ actionPlan })
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center text-sm font-semibold mb-2">
-                  {priorityStyles[item.priority].icon}
-                  <span className="ml-2">{priorityStyles[item.priority].text}</span>
+                  {priorityStyles[item?.priority].icon}
+                  <span className="ml-2">
+                    {t(`priority.${item?.priority}`)}
+                  </span>
                 </div>
-                <p className="text-white/90">{item.description}</p>
+                <p className="text-white/90">{item?.description}</p>
               </div>
               <div className="flex space-x-4 text-sm text-center">
                 <div>
-                  <p className="font-bold text-lg text-cyan-400">{item.etkiSkoru}/10</p>
-                  <p className="text-white/60">Etki</p>
+                  <p className="font-bold text-lg text-cyan-400">{item?.etkiSkoru}/10</p>
+                  <p className="text-white/60">{t('impact')}</p>
                 </div>
                 <div>
-                  <p className="font-bold text-lg text-orange-400">{item.zorlukSkoru}/10</p>
-                  <p className="text-white/60">Zorluk</p>
+                  <p className="font-bold text-lg text-orange-400">{item?.zorlukSkoru}/10</p>
+                  <p className="text-white/60">{t('difficulty')}</p>
                 </div>
               </div>
             </div>
-            {item.gerekce && <p className="text-xs text-white/60 mt-3 pt-2 border-t border-white/10">{item.gerekce}</p>}
-            <p className="text-xs text-white/50 mt-2">Kategori: {item.category}</p>
+            {item?.gerekce && <p className="text-xs text-white/60 mt-3 pt-2 border-t border-white/10">{item?.gerekce}</p>}
+            <p className="text-xs text-white/50 mt-2">{t('category')}: {item?.category}</p>
           </motion.div>
         ))}
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useTranslations } from "next-intl";
 import { motion } from 'framer-motion';
 import { FiCheck, FiLoader } from 'react-icons/fi';
 
@@ -17,10 +17,11 @@ type ProgressAnimationProps = {
 };
 
 const ProgressAnimation: React.FC<ProgressAnimationProps> = ({ steps, progress }) => {
+  const t = useTranslations("ResultsPage");
   return (
     <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 w-full max-w-2xl mx-auto shadow-xl border border-blue-800/20">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">Mevcut Aşama</h2>
+        <h2 className="text-xl font-bold text-white">{t('sections.currentStage')}</h2>
         <div className="text-3xl font-bold text-cyan-400">{progress}%</div>
       </div>
       
@@ -36,9 +37,9 @@ const ProgressAnimation: React.FC<ProgressAnimationProps> = ({ steps, progress }
       
       {/* Adımlar */}
       <div className="space-y-4">
-        {steps.map((step) => (
+        {steps?.map((step) => (
           <div 
-            key={step.id} 
+            key={step?.id} 
             className={`flex items-center gap-3 ${
               step.completed 
                 ? 'text-white' 
@@ -69,7 +70,7 @@ const ProgressAnimation: React.FC<ProgressAnimationProps> = ({ steps, progress }
                 </motion.div>
               ) : null}
             </div>
-            <span className="text-base">{step.label}</span>
+            <span className="text-base">{step?.label}</span>
           </div>
         ))}
       </div>

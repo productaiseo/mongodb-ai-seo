@@ -1,5 +1,5 @@
 {
-  "TabTitle": {
+  "TabTitles": {
     "home": "AiSEO - AI Search Visibility Check"
   },
   "HomePage": {
@@ -47,11 +47,49 @@
     "title": "GEO Report",
     "analysisDate": "Analysis Date",
     "downloadReport": "Download Report",
+    "contactUs": "Contact Us",
+    "contactDescription": "Explore your potential with us for a higher score.",
+    "priority": {
+      "high": "High Priority",
+      "medium": "Medium Priority",
+      "low": "Low Priority"
+    },
+    "impact": "impact",
+    "difficulty": "difficulty",
+    "category": "category",
     "sections": {
       "starting": "Preparing GEO report for...",
+      "currentStage": "Current Stage",
       "overview": {
         "tabTitle": "Overview",
-        "subTitle": "General GEO Assessment"
+        "subTitle": "General GEO Assessment",
+        "geoScore": "GEO Score",
+        "sections": {
+          "executiveSummary": {
+            "title": "Executive Summary"
+          },
+          "marketPotential": {
+            "title": "Market Potential",
+            "description": "Current size and attractiveness of the market."
+          },
+          "competitionIntensity": {
+            "title": "Competition Intensity",
+            "description": "Number and strength of competitors in the market."
+          },
+          "growthTrend": {
+            "title": "Growth Trend",
+            "description": "Future growth expectations of the market."
+          },
+          "brandAwareness": {
+            "title": "Brand Awareness",
+            "description": "Brand's recognition in the market."
+          }
+        },
+        "sectionAction": {
+          "recommendedAction": {
+            "title": "Recommended Action Plan"
+          }
+        }
       },
       "geoPerformance": {
         "tabTitle": "Technical GEO Performance",

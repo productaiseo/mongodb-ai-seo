@@ -47,11 +47,49 @@
     "title": "GEO Raporu",
     "analysisDate": "Analiz Tarihi",
     "downloadReport": "Raporu İndir",
+    "contactUs": "İletişime Geç",
+    "contactDescription": "Daha yüksek bir skor için potansiyelinizi bizimle keşfedin.",
+    "priority": {
+      "high": "Yüksek Öncelik",
+      "medium": "Orta Öncelik",
+      "low": "Düşük Öncelik"
+    },
+    "impact": "etki",
+    "difficulty": "zorluk",
+    "category": "kategori",
     "sections": {
       "starting": "için GEO raporu hazırlanıyor...",
+      "currentStage": "Mevcut Aşama",
       "overview": {
         "tabTitle": "Genel Bakış",
-        "subTitle": "Genel GEO Değerlendirmesi"
+        "subTitle": "Genel GEO Değerlendirmesi",
+        "geoScore": "GEO Skoru",
+        "sectionSummary": {
+          "executiveSummary": {
+            "title": "Yönetici Özeti"
+          },
+          "marketPotential": {
+            "title": "Pazar Potansiyeli",
+            "description": "Pazarın mevcut büyüklüğü ve çekiciliği."
+          },
+          "competitionIntensity": {
+            "title": "Rekabet Yoğunluğu",
+            "description": "Pazardaki rakip sayısı ve gücü."
+          },
+          "growthTrend": {
+            "title": "Büyüme Trendi",
+            "description": "Pazarın gelecekteki büyüme beklentisi."
+          },
+          "brandAwareness": {
+            "title": "Marka Bilinirliği",
+            "description": "Markanın pazardaki tanınırlığı."
+          }
+        },
+        "sectionAction": {
+          "recommendedAction": {
+            "title": "Önerilen Aksiyon Planı"
+          }
+        }
       },
       "geoPerformance": {
         "tabTitle": "Teknik GEO Performansı",

@@ -9,6 +9,7 @@ import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 import ReportHeader from '@/components/Reports/ReportHeader';
 import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
+import Footer from '@/components/Footer';
 import { AnalysisJob } from '@/types/geo';
 // import { auth } from '@/lib/firebase';
 // import { useAuth } from '@/contexts/AuthContext';
@@ -203,11 +204,7 @@ const DomainResultsPage = ({ domain }: Props) => {
         </div>
       </main>
 
-      <footer className="py-5 px-4 md:px-8 border-t border-blue-800/50 text-center text-sm text-white/50">
-        <div className="max-w-7xl mx-auto">
-          <p>© 2025 Sheltron Teknoloji A.Ş. Tüm hakları saklıdır.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
