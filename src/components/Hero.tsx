@@ -43,7 +43,7 @@ const Hero = () => {
         className="w-full mt-24 text-center"
       >
         <p className="text-white/50 text-sm mb-6">
-          BİNLERCE ŞİRKET TARAFINDAN GÜVENİLİYOR
+          {t("TrustingCompanies")}
         </p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
           {/* Logo placeholder'lar - gerçek projede bu kısma gerçek logolar eklenebilir */}
