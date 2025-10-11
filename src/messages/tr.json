@@ -238,5 +238,12 @@
         }
       }
     }
+  },
+  "Footer": {
+    "company": "2025 Sheltron Teknoloji A.Ş.",
+    "rights": "Tüm hakları saklıdır.",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Şartları",
+    "contact": "İletişim"
   }
 }
