@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PrometheusReportComponent from '@/components/Reports/PrometheusReport';
 import ArkheReportComponent from '@/components/Reports/ArkheReport';
 import DelfiAgendaComponent from '@/components/Reports/DelfiAgenda';
-import StrategicImpactReportComponent from '@/components/Reports/StrategicImpactReport';
+// import StrategicImpactReportComponent from '@/components/Reports/StrategicImpactReport';
 import GenerativePerformanceReport from '@/components/Reports/GenerativePerformanceReport';
 import EnhancedGeoScoreOverview from '@/components/Dashboard/EnhancedGeoScoreOverview';
 import ImpactfulActionPlan from '@/components/Dashboard/ImpactfulActionPlan';
@@ -32,7 +32,7 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
     prometheusReport,
     arkheReport,
     delfiAgenda,
-    strategicImpactForecast,
+    // strategicImpactForecast,
     generativePerformanceReport,
   } = jobReport;
 
@@ -41,6 +41,7 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
     { id: 'prometheus', label: t('sections.geoPerformance.tabTitle'), icon: <FiBarChart2 /> },
     { id: 'arkhe', label: t('sections.marketAnalysis.tabTitle'), icon: <FiShield /> },
     { id: 'delfi', label: t('sections.strategicGrowth.tabTitle'), icon: <FiFileText /> },
+    // { id: 'strategic', label: t('sections.strategicImpact.tabTitle'), icon: <FiTrendingUp /> },
     { id: 'generative', label: t('sections.generativePerformance.tabTitle'), icon: <FiZap /> },
   ];
 
@@ -65,13 +66,13 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
               <ImpactfulActionPlan actionPlan={prometheusReport.actionPlan} />
             </div>
           ) : activeTab === 'overview' && !prometheusReport ? (
-            <div>Genel Bakış verileri yüklenemedi.</div>
+            <div>{t('sections.overview.loadingError')}</div>
           ) : null}
 
           {activeTab === 'prometheus' && prometheusReport ? (
             <PrometheusReportComponent report={prometheusReport} />
           ) : activeTab === 'prometheus' && !prometheusReport ? (
-            <div>Teknik GEO Performansı verileri yüklenemedi.</div>
+            <div>{t('sections.geoPerformance.loadingError')}</div>
           ) : null}
 
           {activeTab === 'arkhe' && arkheReport && prometheusReport ? (
@@ -87,26 +88,26 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
               </div>
             </div>
           ) : activeTab === 'arkhe' && (!arkheReport || !prometheusReport) ? (
-            <div>Pazar ve Rakip Analizi verileri yüklenemedi.</div>
+            <div>{t('sections.marketAnalysis.loadingError')}</div>
           ) : null}
 
           {activeTab === 'delfi' && delfiAgenda ? (
             <DelfiAgendaComponent report={delfiAgenda} />
           ) : activeTab === 'delfi' && !delfiAgenda ? (
-            <div>Stratejik Büyüme Planı verileri yüklenemedi.</div>
+            <div>{t('sections.strategicGrowth.loadingError')}</div>
           ) : null}
 
-
+{/*
           {activeTab === 'strategic' && strategicImpactForecast ? (
             <StrategicImpactReportComponent report={strategicImpactForecast} />
           ) : activeTab === 'strategic' && !strategicImpactForecast ? (
-            <div>Stratejik Etki & ROI verileri yüklenemedi.</div>
+            <div>{t('sections.strategicImpact.loadingError')}</div>
           ) : null}
-
+*/}
           {activeTab === 'generative' && generativePerformanceReport ? (
             <GenerativePerformanceReport report={generativePerformanceReport} />
           ) : activeTab === 'generative' && !generativePerformanceReport ? (
-            <div>Üretken Performans verileri yüklenemedi.</div>
+            <div>{t('sections.generativePerformance.loadingError')}</div>
           ) : null}
         </motion.div>
       </AnimatePresence>

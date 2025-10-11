@@ -64,6 +64,7 @@
         "tabTitle": "Overview",
         "subTitle": "General GEO Assessment",
         "geoScore": "GEO Score",
+        "loadingError": "General Overview data could not be loaded.",
         "sections": {
           "executiveSummary": {
             "title": "Executive Summary"
@@ -93,19 +94,91 @@
       },
       "geoPerformance": {
         "tabTitle": "Technical GEO Performance",
-        "subTitle": "Performance of GEO Pillars"
+        "subTitle": "Performance of GEO Pillars",
+        "loadingError": "Technical GEO Performance data could not be loaded.",
+        "expandView": "Expand All",
+        "toggleView": "Collapse All",
+        "showSignals": "Show Signals",
+        "hideSignals": "Hide Signals",
+        "moreDetails": "More Details",
+        "positiveSignals": "Positive Signals",
+        "negativeSignals": "Negative Signals",
+        "sections": {
+          "pageSpeed": {
+            "title": "Page Speed"
+          },
+          "contentStructure": {
+            "title": "Content Structure"
+          },
+          "eeatSignals": {
+            "title": "EEAT Signals"
+          },
+          "technicalGeo": {
+            "title": "Technical GEO"
+          },
+          "structuredData": {
+            "title": "Structured Data"
+          },
+          "brandAuthority": {
+            "title": "Brand Authority"
+          },
+          "assetOptimization": {
+            "title": "Asset Optimization"
+          },
+          "contentStrategy": {
+            "title": "Content Strategy"
+          },
+          "metricTranslations": {
+            "headings": "Headings",
+            "contentDepth": "Content Depth",
+            "paragraphs": "Paragraphs",
+            "metaTags": "Meta Tags",
+            "imageAlts": "Image Alts",
+            "schemaOrg": "Schema.org",
+            "backlinks": "Backlinks",
+            "brandMentions": "Brand Mentions",
+            "experience": "Experience",
+            "expertise": "Expertise",
+            "authoritativeness": "Authoritativeness",
+            "trustworthiness": "Trustworthiness",
+            "entityCompleteness": "Entity Completeness",
+            "knowledgeGraphPresence": "Knowledge Graph Presence",
+            "entityReconciliation": "Entity Reconciliation",
+            "relationshipAnalysis": "Relationship Analysis",
+            "conversationalReadinessScore": "Conversational Readiness Score",
+            "informationGainScore": "Information Gain Score",
+            "geoTopicGapAnalysis": "GEO Topic Gap Analysis",
+            "multimodalOptimization": "Multimodal Optimization"
+          }
+        }
       },
       "marketAnalysis": {
         "tabTitle": "Market & Competitor Analysis",
-        "subTitle": "Business Model & Revenue Streams"
+        "subTitle": "Business Model & Revenue Streams",
+        "loadingError": "Market & Competitor Analysis data could not be loaded.",
+        "sections": {
+        }
       },
       "strategicGrowth": {
         "tabTitle": "Strategic Growth Plan",
-        "subTitle": "Strategic Focus"
+        "subTitle": "Strategic Focus",
+        "loadingError": "Strategic Growth Plan data could not be loaded.",
+        "sections": {
+        }
+      },
+      "strategicImpact": {
+        "tabTitle": "Strategic Impact",
+        "subTitle": "Strategic Impact Report",
+        "loadingError": "Strategic Impact & ROI data could not be loaded.",
+        "sections": {
+        }
       },
       "generativePerformance": {
         "tabTitle": "Generative Performance",
-        "subTitle": "Generative Performance Report"
+        "subTitle": "Generative Performance Report",
+        "loadingError": "Generative Performance data could not be loaded.",
+        "sections": {
+        }
       }
     }
   }
