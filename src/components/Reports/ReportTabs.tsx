@@ -79,7 +79,7 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
             <div>
               <ArkheReportComponent report={arkheReport} />
               <div className="mt-6">
-                <h3 className="text-xl font-bold mb-4">Rakip Karşılaştırması</h3>
+                <h3 className="text-xl font-bold mb-4">{t('sections.marketAnalysis.sections.competitorComparison.title')}</h3>
                 <CompetitorComparisonChart
                   competitors={arkheReport.competitors.businessCompetitors}
                   mainDomainScore={prometheusReport.overallGeoScore}

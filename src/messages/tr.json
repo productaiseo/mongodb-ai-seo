@@ -154,13 +154,48 @@
       },
       "marketAnalysis": {
         "tabTitle": "Pazar ve Rakip Analizi",
-        "subTitle": "İş Modeli ve Gelir Akışları",
-        "loadingError": "Pazar ve Rakip Analizi verileri yüklenemedi."
+        "loadingError": "Pazar ve Rakip Analizi verileri yüklenemedi.",
+        "sections": {
+          "businessModel": {
+            "title": "İş Modeli ve Gelir Akışları",
+            "subTitle": "İş Modeli Tipi",
+            "subContentTitle": "Ana Gelir Akışları"
+          },
+          "targetGroups": {
+            "title": "Hedef Kitle Analizi",
+            "subTitle": "Birincil Hedef Kitle",
+            "subContentTitle": "İkincil Hedef Kitleler"
+          },
+          "businessCompetitors": {
+            "title": "İş Rakipleri Analizi",
+            "columnTitleBusiness": "İş Rakibi",
+            "columnTitleReason": "Neden Rakip?"
+          },
+          "contentCompetitors": {
+            "title": "İçerik Rakipleri Analizi",
+            "columnTitleTopic": "İçerik Rakibi",
+            "columnTitleReason": "Neden Rakip?"
+          },
+          "competitionSummary": {
+            "title": "Rekabet Özeti"
+          },
+          "competitorComparison": {
+            "title": "Rakip Karşılaştırması"
+          }
+        }
       },
       "strategicGrowth": {
         "tabTitle": "Stratejik Büyüme Planı",
-        "subTitle": "Stratejik Odak",
-        "loadingError": "Stratejik Büyüme Planı verileri yüklenemedi."
+        "loadingError": "Stratejik Büyüme Planı verileri yüklenemedi.",
+        "sections": {
+          "strategicFocus": "Stratejik Odak",
+          "strategicGoals": "Stratejik Hedefler",
+          "strategicQuestions": {
+            "title": "Özelleştirilmiş Stratejik Sorular",
+            "originalQuestion": "Orijinal Soru",
+            "customizedQuestion": "Özelleştirilmiş Soru"
+          }
+        }
       },
       "strategicImpact": {
         "tabTitle": "Stratejik Etki",
@@ -170,7 +205,37 @@
       "generativePerformance": {
         "tabTitle": "Üretken Performans",
         "subTitle": "Üretken Performans Raporu",
-        "loadingError": "Üretken Performans verileri yüklenemedi."
+        "loadingError": "Üretken Performans verileri yüklenemedi.",
+        "notAvailable": "Üretken Performans Raporu mevcut değil.",
+        "sections": {
+          "productiveShare": {
+            "title": "Üretken Ses Payı",
+            "description": "AI yanıtlarındaki marka bahsedilmelerine dayanmaktadır."
+          },
+          "citationRate": {
+            "title": "Alıntılanma Oranı",
+            "description": "toplam alıntı bulundu."
+          },
+          "positiveEmotion": {
+            "title": "Pozitif Duygu",
+            "description": "Genel eğilim"
+          },
+          "accuracyScore": {
+            "title": "Doğruluk Skoru",
+            "description": "RAG doğrulamasına dayanmaktadır."
+          },
+          "quoteDetails": {
+            "title": "Alıntı Detayları",
+            "noQuotes": "AI yanıtlarında doğrudan URL alıntısı bulunamadı."
+          },
+          "accuracyAndHallucination": {
+            "title": "Doğruluk & Halüsinasyon Örnekleri",
+            "claim": "İddia",
+            "status": "Durum",
+            "explanation": "Açıklama",
+            "noAnalysis": "Doğruluk için belirli bir iddia analiz edilmedi."
+          }
+        }
       }
     }
   }

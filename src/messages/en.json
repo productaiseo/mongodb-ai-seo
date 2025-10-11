@@ -154,30 +154,87 @@
       },
       "marketAnalysis": {
         "tabTitle": "Market & Competitor Analysis",
-        "subTitle": "Business Model & Revenue Streams",
         "loadingError": "Market & Competitor Analysis data could not be loaded.",
         "sections": {
+          "businessModel": {
+            "title": "Business Model & Revenue Streams",
+            "subTitle": "Business Model Type",
+            "subContentTitle": "Primary Revenue Streams"
+          },
+          "targetGroups": {
+            "title": "Target Audience Analysis",
+            "subTitle": "Primary Target Audience",
+            "subContentTitle": "Secondary Target Audiences"
+          },
+          "businessCompetitors": {
+            "title": "Business Competitor Analysis",
+            "columnTitleBusiness": "Business Competitor",
+            "columnTitleReason": "Why Competitor?"
+          },
+          "contentCompetitors": {
+            "title": "Content Competitor Analysis",
+            "columnTitleTopic": "Content Competitor",
+            "columnTitleReason": "Why Competitor?"
+          },
+          "competitionSummary": {
+            "title": "Competition Summary"
+          },
+          "competitorComparison": {
+            "title": "Competitor Comparison"
+          }
         }
       },
       "strategicGrowth": {
         "tabTitle": "Strategic Growth Plan",
-        "subTitle": "Strategic Focus",
         "loadingError": "Strategic Growth Plan data could not be loaded.",
         "sections": {
+          "strategicFocus": "Strategic Focus",
+          "strategicGoals": "Strategic Goals",
+          "strategicQuestions": {
+            "title": "Customized Strategic Questions",
+            "originalQuestion": "Original Question",
+            "customizedQuestion": "Customized Question"
+          }
         }
       },
       "strategicImpact": {
         "tabTitle": "Strategic Impact",
         "subTitle": "Strategic Impact Report",
-        "loadingError": "Strategic Impact & ROI data could not be loaded.",
-        "sections": {
-        }
+        "loadingError": "Strategic Impact & ROI data could not be loaded."
       },
       "generativePerformance": {
         "tabTitle": "Generative Performance",
         "subTitle": "Generative Performance Report",
         "loadingError": "Generative Performance data could not be loaded.",
+        "notAvailable": "Generative Performance Report is not available.",
         "sections": {
+          "productiveShare": {
+            "title": "Share of Generative Voice",
+            "description": "Based on brand mentions in AI responses."
+          },
+          "citationRate": {
+            "title": "Citation Rate",
+            "description": "Total citations found."
+          },
+          "positiveEmotion": {
+            "title": "Positive Emotion",
+            "description": "Overall trend"
+          },
+          "accuracyScore": {
+            "title": "Accuracy Score",
+            "description": "Based on RAG verification."
+          },
+          "quoteDetails": {
+            "title": "Quote Details",
+            "noQuotes": "No direct URL citations found in AI responses."
+          },
+          "accuracyAndHallucination": {
+            "title": "Accuracy & Hallucination Examples",
+            "claim": "Claim",
+            "status": "Status",
+            "explanation": "Explanation",
+            "noAnalysis": "No specific claim analyzed for accuracy."
+          }
         }
       }
     }

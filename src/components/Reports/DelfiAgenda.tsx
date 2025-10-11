@@ -18,7 +18,7 @@ const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
       <div>
         <h3 className="flex items-center text-xl font-bold text-white mb-3">
           <FiTarget className="mr-2 text-cyan-400" />
-          <span>{t('sections.strategicGrowth.subTitle')}</span>
+          <span>{t('sections.strategicGrowth.sections.strategicFocus')}</span>
         </h3>
         <p className="text-white/80 bg-blue-900/30 p-4 rounded-lg border border-blue-800/30">{report.oturumOdagi}</p>
       </div>
@@ -27,11 +27,11 @@ const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
         <div>
           <h3 className="flex items-center text-xl font-bold text-white mb-3">
             <FiList className="mr-2 text-cyan-400" />
-            <span>Stratejik Hedefler</span>
+            <span>{t('sections.strategicGrowth.sections.strategicGoals')}</span>
           </h3>
           <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/30">
             <ul className="list-disc list-inside text-white/80 space-y-2">
-              {report.stratejikHedefler.map((priority, index) => (
+              {report.stratejikHedefler?.map((priority, index) => (
                 <li key={index}>{priority}</li>
               ))}
             </ul>
@@ -43,19 +43,19 @@ const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
         <div>
           <h3 className="flex items-center text-xl font-bold text-white mb-3">
             <FiHelpCircle className="mr-2 text-cyan-400" />
-            <span>Özelleştirilmiş Stratejik Sorular</span>
+            <span>{t('sections.strategicGrowth.sections.strategicQuestions.title')}</span>
           </h3>
           <div className="space-y-4">
-            {report.customizedQuestions.map((question, index) => (
+            {report.customizedQuestions?.map((question, index) => (
               <div key={index} className="bg-blue-900/30 p-4 rounded-lg border border-blue-800/30">
                 <p className="text-sm font-semibold text-white/60 mb-2 flex items-center">
                   <FiHelpCircle className="mr-2"/>
-                  <span className="italic">Orijinal Soru: &quot;{question.original}&quot;</span>
+                  <span className="italic">{t('sections.strategicGrowth.sections.strategicQuestions.originalQuestion')}: &quot;{question.original}&quot;</span>
                 </p>
                 <div className="flex items-start text-white/90">
                   <FiArrowRightCircle className="mr-3 mt-1 flex-shrink-0 text-cyan-400"/>
                   <p>
-                    <span className="font-bold">Özelleştirilmiş Soru:</span> {question.customized}
+                    <span className="font-bold">{t('sections.strategicGrowth.sections.strategicQuestions.customizedQuestion')}:</span> {question.customized}
                   </p>
                 </div>
               </div>

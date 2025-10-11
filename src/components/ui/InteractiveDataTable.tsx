@@ -62,9 +62,9 @@ const InteractiveDataTable: React.FC<InteractiveDataTableProps> = ({ columns, da
           </tr>
         </thead>
         <tbody className="divide-y divide-blue-800/20">
-          {sortedData.map((row, index) => (
+          {sortedData?.map((row, index) => (
             <tr key={index} className={`${index % 2 === 0 ? 'bg-blue-800/10' : ''} hover:bg-blue-700/20 transition-colors`}>
-              {columns.map((col) => (
+              {columns?.map((col) => (
                 <td key={col.key} className="py-4 px-4 whitespace-nowrap text-sm text-white/90">
                   {row[col.key]}
                 </td>
