@@ -17,6 +17,9 @@ interface MetricDetailCardProps {
 
 
 const MetricDetailCard: React.FC<MetricDetailCardProps> = ({ metricName, metricData }) => {
+
+  const t = useTranslations("ResultsPage");
+
   const [isSignalsOpen, setIsSignalsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -30,28 +33,28 @@ const MetricDetailCard: React.FC<MetricDetailCardProps> = ({ metricName, metricD
     return { text: 'text-red-400', bg: 'bg-red-500' };
   };
 
-  const scoreColor = getScoreColor(metricData.score);
+  const scoreColor = getScoreColor(metricData?.score);
 
   return (
     <div className="text-sm bg-blue-800/10 p-3 rounded-lg">
       <div className="flex justify-between items-center mb-2">
         <p className="font-semibold text-white/80">{formatMetricName(metricName)}</p>
-        <p className={`font-bold ${scoreColor.text}`}>{metricData.score}</p>
+        <p className={`font-bold ${scoreColor.text}`}>{metricData?.score}</p>
       </div>
-      <ProgressBar score={metricData.score} colorClass={scoreColor.bg} />
-      <p className="text-white/70 mt-2 text-xs">{metricData.justification}</p>
-      
+      <ProgressBar score={metricData?.score} colorClass={scoreColor.bg} />
+      <p className="text-white/70 mt-2 text-xs">{metricData?.justification}</p>
+
       <div className="flex items-center gap-4 mt-3">
-        {(metricData.positivePoints || metricData.negativePoints) && (
+        {(metricData?.positivePoints || metricData?.negativePoints) && (
           <button onClick={() => setIsSignalsOpen(!isSignalsOpen)} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center">
-            {isSignalsOpen ? 'Sinyalleri Gizle' : 'Sinyalleri Göster'}
+            {isSignalsOpen ? t('sections.geoPerformance.hideSignals') : t('sections.geoPerformance.showSignals')}
             {isSignalsOpen ? <FiChevronUp className="ml-1" /> : <FiChevronDown className="ml-1" />}
           </button>
         )}
         {metricData.details && (
           <button onClick={() => setIsModalOpen(true)} className="text-xs text-purple-400 hover:text-purple-300 flex items-center">
             <FiInfo className="mr-1" />
-            Daha Fazla Detay
+            {t('sections.geoPerformance.moreDetails')}
           </button>
         )}
       </div>
@@ -64,20 +67,20 @@ const MetricDetailCard: React.FC<MetricDetailCardProps> = ({ metricName, metricD
             exit={{ height: 0, opacity: 0, marginTop: 0 }}
             className="overflow-hidden"
           >
-            {metricData.positivePoints && metricData.positivePoints.length > 0 && (
+            {metricData?.positivePoints && metricData?.positivePoints?.length > 0 && (
               <div className="mb-2">
-                <p className="text-xs font-bold text-green-400/80 flex items-center"><FiCheckCircle className="mr-1"/> Pozitif Sinyaller:</p>
+                <p className="text-xs font-bold text-green-400/80 flex items-center"><FiCheckCircle className="mr-1"/>{t('sections.geoPerformance.positiveSignals')}:</p>
                 <ul className="list-disc list-inside text-xs text-white/70 pl-2 space-y-1 mt-1">
-                  {metricData.positivePoints.map((e, i) => <li key={i}>{e}</li>)}
+                  {metricData?.positivePoints?.map((e, i) => <li key={i}>{e}</li>)}
                 </ul>
               </div>
             )}
 
-            {metricData.negativePoints && metricData.negativePoints.length > 0 && (
+            {metricData?.negativePoints && metricData?.negativePoints.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-red-400/80 flex items-center"><FiXCircle className="mr-1"/> Negatif Sinyaller:</p>
+                <p className="text-xs font-bold text-red-400/80 flex items-center"><FiXCircle className="mr-1"/>{t('sections.geoPerformance.negativeSignals')}:</p>
                 <ul className="list-disc list-inside text-xs text-white/70 pl-2 space-y-1 mt-1">
-                  {metricData.negativePoints.map((e, i) => <li key={i}>{e}</li>)}
+                  {metricData?.negativePoints?.map((e, i) => <li key={i}>{e}</li>)}
                 </ul>
               </div>
             )}
@@ -86,7 +89,7 @@ const MetricDetailCard: React.FC<MetricDetailCardProps> = ({ metricName, metricD
       </AnimatePresence>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={formatMetricName(metricName)}>
-        <p className="text-sm text-white/80">{metricData.details}</p>
+        <p className="text-sm text-white/80">{metricData?.details}</p>
       </Modal>
     </div>
   );
@@ -103,40 +106,46 @@ interface PillarCardProps {
   onToggle: () => void;
 }
 
-const pillarTranslations: { [key: string]: string } = {
-  contentStructure: 'İçerik Yapısı',
-  eeatSignals: 'E-E-A-T Sinyalleri',
-  technicalGEO: 'Teknik GEO',
-  structuredData: 'Yapısal Veri',
-  brandAuthority: 'Marka Otoritesi',
-  entityOptimization: 'Varlık Optimizasyonu',
-  contentStrategy: 'İçerik Stratejisi',
-  userJourney: 'Kullanıcı Yolculuğu',
-};
-
-const metricTranslations: { [key: string]: string } = {
-  headings: 'Başlıklar',
-  paragraphs: 'Paragraflar',
-  metaTags: 'Meta Etiketler',
-  imageAlts: 'Resim Alt Metinleri',
-  schemaOrg: 'Schema.org',
-  backlinks: 'Geri Bağlantılar',
-  brandMentions: 'Marka Bahisleri',
-  experience: 'Deneyim',
-  expertise: 'Uzmanlık',
-  authoritativeness: 'Otorite',
-  trustworthiness: 'Güvenilirlik',
-  entityCompleteness: 'Varlık Bütünlüğü',
-  knowledgeGraphPresence: 'Bilgi Grafiği Varlığı',
-  entityReconciliation: 'Varlık Mutabakatı',
-  relationshipAnalysis: 'İlişki Analizi',
-  conversationalReadinessScore: 'Diyaloğa Hazırlık Skoru',
-  informationGainScore: 'Bilgi Kazanım Skoru',
-  geoTopicGapAnalysis: 'GEO Konu Boşluğu Analizi',
-  multimodalOptimization: 'Çoklu Model Optimizasyonu',
-};
 
 const PillarCard: React.FC<PillarCardProps> = ({ pillarName, pillarData, isOpen, onToggle }) => {
+
+  const t = useTranslations("ResultsPage");
+
+  if (!pillarData) return null;
+
+  const pillarTranslations: { [key: string]: string } = {
+    performance: t('sections.geoPerformance.sections.pageSpeed.title'),
+    contentStructure: t('sections.geoPerformance.sections.contentStructure.title'),
+    eeatSignals: t('sections.geoPerformance.sections.eeatSignals.title'),
+    technicalGEO: t('sections.geoPerformance.sections.technicalGeo.title'),
+    structuredData: t('sections.geoPerformance.sections.structuredData.title'),
+    brandAuthority: t('sections.geoPerformance.sections.brandAuthority.title'),
+    entityOptimization: t('sections.geoPerformance.sections.assetOptimization.title'),
+    contentStrategy: t('sections.geoPerformance.sections.contentStrategy.title'),
+  };
+
+  const metricTranslations: { [key: string]: string } = {
+    headings: t('sections.geoPerformance.sections.metricTranslations.headings'),
+    paragraphs: t('sections.geoPerformance.sections.metricTranslations.paragraphs'),
+    metaTags: t('sections.geoPerformance.sections.metricTranslations.metaTags'),
+    imageAlts: t('sections.geoPerformance.sections.metricTranslations.imageAlts'),
+    schemaOrg: t('sections.geoPerformance.sections.metricTranslations.schemaOrg'),
+    backlinks: t('sections.geoPerformance.sections.metricTranslations.backlinks'),
+    brandMentions: t('sections.geoPerformance.sections.metricTranslations.brandMentions'),
+    experience: t('sections.geoPerformance.sections.metricTranslations.experience'),
+    expertise: t('sections.geoPerformance.sections.metricTranslations.expertise'),
+    authoritativeness: t('sections.geoPerformance.sections.metricTranslations.authoritativeness'),
+    trustworthiness: t('sections.geoPerformance.sections.metricTranslations.trustworthiness'),
+    entityCompleteness: t('sections.geoPerformance.sections.metricTranslations.entityCompleteness'),
+    knowledgeGraphPresence: t('sections.geoPerformance.sections.metricTranslations.knowledgeGraphPresence'),
+    entityReconciliation: t('sections.geoPerformance.sections.metricTranslations.entityReconciliation'),
+    relationshipAnalysis: t('sections.geoPerformance.sections.metricTranslations.relationshipAnalysis'),
+    conversationalReadinessScore: t('sections.geoPerformance.sections.metricTranslations.conversationalReadinessScore'),
+    informationGainScore: t('sections.geoPerformance.sections.metricTranslations.informationGainScore'),
+    geoTopicGapAnalysis: t('sections.geoPerformance.sections.metricTranslations.geoTopicGapAnalysis'),
+    multimodalOptimization: 'Çoklu Model Optimizasyonu',
+  };
+
   const getScoreColor = (score: number | null | undefined) => {
     if (score === null || score === undefined) return 'text-gray-400';
     if (score >= 70) return 'text-green-400';
@@ -219,14 +228,14 @@ const PrometheusReport: React.FC<PrometheusReportProps> = ({ report }) => {
             className="flex items-center gap-2 text-xs bg-blue-800/50 hover:bg-blue-800/80 text-white/80 font-semibold py-1 px-3 rounded-lg transition-colors"
           >
             {allAreOpen ? <FiMinusSquare/> : <FiPlusSquare/>}
-            <span>{allAreOpen ? 'Tümünü Daralt' : 'Tümünü Genişlet'}</span>
+            <span>{allAreOpen ? t('sections.geoPerformance.toggleView') : t('sections.geoPerformance.expandView')}</span>
           </button>
         </div>
 
         <PillarPerformanceChart pillars={report.pillars} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {Object.entries(report.pillars).map(([key, value]) => (
+          {Object.entries(report?.pillars)?.map(([key, value]) => (
             <PillarCard
               key={key}
               pillarName={key}

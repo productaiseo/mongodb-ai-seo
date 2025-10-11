@@ -64,6 +64,7 @@
         "tabTitle": "Genel Bakış",
         "subTitle": "Genel GEO Değerlendirmesi",
         "geoScore": "GEO Skoru",
+        "loadingError": "Genel Bakış verileri yüklenemedi.",
         "sectionSummary": {
           "executiveSummary": {
             "title": "Yönetici Özeti"
@@ -93,19 +94,148 @@
       },
       "geoPerformance": {
         "tabTitle": "Teknik GEO Performansı",
-        "subTitle": "GEO Direkleri Performansı"
+        "subTitle": "GEO Direkleri Performansı",
+        "loadingError": "Teknik GEO Performansı verileri yüklenemedi.",
+        "expandView": "Tümünü Genişlet",
+        "toggleView": "Tümünü Daralt",
+        "showSignals": "Sinyalleri Göster",
+        "hideSignals": "Sinyalleri Gizle",
+        "moreDetails": "Daha Fazla Detay",
+        "positiveSignals": "Pozitif Sinyaller",
+        "negativeSignals": "Negatif Sinyaller",
+        "sections": {
+          "pageSpeed": {
+            "title": "Sayfa Hızı"
+          },
+          "contentStructure": {
+            "title": "İçerik Yapısı"
+          },
+          "eeatSignals": {
+            "title": "EEAT Sinyalları"
+          },
+          "technicalGeo": {
+            "title": "Teknik GEO"
+          },
+          "structuredData": {
+            "title": "Yapısal Veri"
+          },
+          "brandAuthority": {
+            "title": "Marka Otoritesi"
+          },
+          "assetOptimization": {
+            "title": "Varlık Optimizasyonu"
+          },
+          "contentStrategy": {
+            "title": "İçerik Stratejisi"
+          },
+          "metricTranslations": {
+            "headings": "Başlıklar",
+            "contentDepth": "İçerik Derinliği",
+            "paragraphs": "Paragraflar",
+            "metaTags": "Meta Etiketler",
+            "imageAlts": "Resim Alt Metinleri",
+            "schemaOrg": "Schema.org",
+            "backlinks": "Geri Bağlantılar",
+            "brandMentions": "Marka Bahisleri",
+            "experience": "Deneyim",
+            "expertise": "Uzmanlık",
+            "authoritativeness": "Otorite",
+            "trustworthiness": "Güvenilirlik",
+            "entityCompleteness": "Varlık Bütünlüğü",
+            "knowledgeGraphPresence": "Bilgi Grafiği Varlığı",
+            "entityReconciliation": "Varlık Mutabakatı",
+            "relationshipAnalysis": "İlişki Analizi",
+            "conversationalReadinessScore": "Diyaloğa Hazırlık Skoru",
+            "informationGainScore": "Bilgi Kazanım Skoru",
+            "geoTopicGapAnalysis": "GEO Konu Boşluğu Analizi",
+            "multimodalOptimization": "Çoklu Model Optimizasyonu"
+        }
+      }
       },
       "marketAnalysis": {
         "tabTitle": "Pazar ve Rakip Analizi",
-        "subTitle": "İş Modeli ve Gelir Akışları"
+        "loadingError": "Pazar ve Rakip Analizi verileri yüklenemedi.",
+        "sections": {
+          "businessModel": {
+            "title": "İş Modeli ve Gelir Akışları",
+            "subTitle": "İş Modeli Tipi",
+            "subContentTitle": "Ana Gelir Akışları"
+          },
+          "targetGroups": {
+            "title": "Hedef Kitle Analizi",
+            "subTitle": "Birincil Hedef Kitle",
+            "subContentTitle": "İkincil Hedef Kitleler"
+          },
+          "businessCompetitors": {
+            "title": "İş Rakipleri Analizi",
+            "columnTitleBusiness": "İş Rakibi",
+            "columnTitleReason": "Neden Rakip?"
+          },
+          "contentCompetitors": {
+            "title": "İçerik Rakipleri Analizi",
+            "columnTitleTopic": "İçerik Rakibi",
+            "columnTitleReason": "Neden Rakip?"
+          },
+          "competitionSummary": {
+            "title": "Rekabet Özeti"
+          },
+          "competitorComparison": {
+            "title": "Rakip Karşılaştırması"
+          }
+        }
       },
       "strategicGrowth": {
         "tabTitle": "Stratejik Büyüme Planı",
-        "subTitle": "Stratejik Odak"
+        "loadingError": "Stratejik Büyüme Planı verileri yüklenemedi.",
+        "sections": {
+          "strategicFocus": "Stratejik Odak",
+          "strategicGoals": "Stratejik Hedefler",
+          "strategicQuestions": {
+            "title": "Özelleştirilmiş Stratejik Sorular",
+            "originalQuestion": "Orijinal Soru",
+            "customizedQuestion": "Özelleştirilmiş Soru"
+          }
+        }
+      },
+      "strategicImpact": {
+        "tabTitle": "Stratejik Etki",
+        "subTitle": "Stratejik Etki Raporu",
+        "loadingError": "Stratejik Etki & ROI verileri yüklenemedi."
       },
       "generativePerformance": {
         "tabTitle": "Üretken Performans",
-        "subTitle": "Üretken Performans Raporu"
+        "subTitle": "Üretken Performans Raporu",
+        "loadingError": "Üretken Performans verileri yüklenemedi.",
+        "notAvailable": "Üretken Performans Raporu mevcut değil.",
+        "sections": {
+          "productiveShare": {
+            "title": "Üretken Ses Payı",
+            "description": "AI yanıtlarındaki marka bahsedilmelerine dayanmaktadır."
+          },
+          "citationRate": {
+            "title": "Alıntılanma Oranı",
+            "description": "toplam alıntı bulundu."
+          },
+          "positiveEmotion": {
+            "title": "Pozitif Duygu",
+            "description": "Genel eğilim"
+          },
+          "accuracyScore": {
+            "title": "Doğruluk Skoru",
+            "description": "RAG doğrulamasına dayanmaktadır."
+          },
+          "quoteDetails": {
+            "title": "Alıntı Detayları",
+            "noQuotes": "AI yanıtlarında doğrudan URL alıntısı bulunamadı."
+          },
+          "accuracyAndHallucination": {
+            "title": "Doğruluk & Halüsinasyon Örnekleri",
+            "claim": "İddia",
+            "status": "Durum",
+            "explanation": "Açıklama",
+            "noAnalysis": "Doğruluk için belirli bir iddia analiz edilmedi."
+          }
+        }
       }
     }
   }
