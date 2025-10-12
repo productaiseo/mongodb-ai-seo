@@ -13,6 +13,8 @@ import {
 } from '@/types/analysis';
 import { GenerativePerformanceReport } from '@/types/geo';
 
+import 'server-only';
+
 // API anahtarları
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -40,10 +42,10 @@ export function isOpenAIConfigured(): boolean {
   return !!OPENAI_API_KEY;
 }
 
-export async function checkContentVisibility(url: string, query: string): Promise<ContentVisibilityResult> {
+export async function checkContentVisibility(url: string, query: string, locale: string = 'en'): Promise<ContentVisibilityResult> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.CHECK_VISIBILITY(url, query, '');
+    const prompt = PROMPTS.OPENAI.CHECK_VISIBILITY(url, query, '', locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -66,6 +68,7 @@ export async function checkContentVisibility(url: string, query: string): Promis
 
 export async function generatePotentialQueries(
   domain: string,
+  locale: string = 'en',
   options?: {
     model?: string;
     apiKey?: string;
@@ -78,7 +81,7 @@ export async function generatePotentialQueries(
     const client = getOpenAIInstance();
     const count = options?.count || 15;
     const model = options?.model || MODEL_NAMES.DEFAULT;
-    const systemPrompt = PROMPTS.OPENAI.GENERATE_QUERIES(domain, count);
+    const systemPrompt = PROMPTS.OPENAI.GENERATE_QUERIES(domain, count, locale);
     
     const response = await client.chat.completions.create({
       model: model,
@@ -100,10 +103,10 @@ export async function generatePotentialQueries(
   }
 }
 
-export async function analyzeBusinessModel(content: string): Promise<BusinessModelAnalysis> {
+export async function analyzeBusinessModel(content: string, locale: string = 'en'): Promise<BusinessModelAnalysis> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.ANALYZE_BUSINESS_MODEL(content);
+    const prompt = PROMPTS.OPENAI.ANALYZE_BUSINESS_MODEL(content, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -127,10 +130,10 @@ export async function analyzeBusinessModel(content: string): Promise<BusinessMod
   }
 }
 
-export async function analyzeTargetAudience(content: string): Promise<TargetAudienceAnalysis> {
+export async function analyzeTargetAudience(content: string, locale: string = 'en'): Promise<TargetAudienceAnalysis> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.ANALYZE_TARGET_AUDIENCE(content);
+    const prompt = PROMPTS.OPENAI.ANALYZE_TARGET_AUDIENCE(content, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -154,10 +157,10 @@ export async function analyzeTargetAudience(content: string): Promise<TargetAudi
   }
 }
 
-export async function analyzeCompetitors(content: string, url: string): Promise<CompetitorAnalysis> {
+export async function analyzeCompetitors(content: string, url: string, locale: string = 'en'): Promise<CompetitorAnalysis> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.ANALYZE_COMPETITORS(content, url);
+    const prompt = PROMPTS.OPENAI.ANALYZE_COMPETITORS(content, url, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -184,11 +187,12 @@ export async function analyzeCompetitors(content: string, url: string): Promise<
 export async function analyzeEEATSignals(
   content: string,
   sector: string,
-  audience: string
+  audience: string,
+  locale: string = 'en'
 ): Promise<EEATAnalysis> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.ANALYZE_EEAT_SIGNALS(content, sector, audience);
+    const prompt = PROMPTS.OPENAI.ANALYZE_EEAT_SIGNALS(content, sector, audience, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -212,12 +216,12 @@ export async function analyzeEEATSignals(
   }
 }
 
-export async function generateDelfiAgenda(prometheusReport: any): Promise<DelfiAgenda> {
+export async function generateDelfiAgenda(prometheusReport: any, locale: string = 'en'): Promise<DelfiAgenda> {
   try {
     const client = getOpenAIInstance();
     // Prometheus raporunu string'e çevir
     const reportString = typeof prometheusReport === 'string' ? prometheusReport : JSON.stringify(prometheusReport, null, 2);
-    const prompt = PROMPTS.OPENAI.GENERATE_DELFI_AGENDA(reportString);
+    const prompt = PROMPTS.OPENAI.GENERATE_DELFI_AGENDA(reportString, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -241,10 +245,14 @@ export async function generateDelfiAgenda(prometheusReport: any): Promise<DelfiA
   }
 }
 
-export async function generateGenerativePerformanceReport(content: string, competitors: string[]): Promise<GenerativePerformanceReport> {
+export async function generateGenerativePerformanceReport(
+  content: string, 
+  competitors: string[], 
+  locale: string = 'en'
+): Promise<GenerativePerformanceReport> {
   try {
     const client = getOpenAIInstance();
-    const prompt = PROMPTS.OPENAI.GENERATE_GENERATIVE_PERFORMANCE_REPORT(content, competitors);
+    const prompt = PROMPTS.OPENAI.GENERATE_GENERATIVE_PERFORMANCE_REPORT(content, competitors, locale);
 
     const response = await client.chat.completions.create({
       model: MODEL_NAMES.DEFAULT,
@@ -275,4 +283,3 @@ export default {
   generateGenerativePerformanceReport,
   MODEL_NAMES,
 };
-import 'server-only';

@@ -107,7 +107,7 @@ export async function runPerformanceAnalysis(url: string) {
     u.searchParams.set('category', 'performance');
     u.searchParams.set('key', apiKey);
 
-    logger.info(`PageSpeed Insights analizi başlatılıyor: ${url}`, 'performanceAnalyzer.run');
+    logger.info(`PageSpeed Insights analysis is starting: ${url}`, 'performanceAnalyzer.run');
 
     const resp = await fetch(u.toString(), { method: 'GET' });
     const json = await resp.json().catch(() => ({}));

@@ -1,24 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-export const runtime = 'nodejs';
 import crypto from 'crypto';
-// import { createHttpTask } from '@/lib/cloudTasks';
 import logger from '@/utils/logger';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 800; // 800 seconds
 
 // Enqueue analysis via Cloud Tasks (if configured), else call orchestrator with OIDC, else fallback to local start-analysis
 export async function POST(request: NextRequest) {
   try {
-    let body: any;
-    try {
-      body = await request.json();
-    } catch (e) {
-      logger.error('Invalid JSON body', 'enqueue-analysis', { e });
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-    }
-    const { jobId, userId, domain } = body || {};
+
+    const { jobId, userId, domain, locale } = await request.json();
+
     if (!jobId || !userId || !domain) {
       return NextResponse.json({ error: 'jobId, userId ve domain zorunludur' }, { status: 400 });
     }
+
+    console.log("locale enqueue-analysis", locale);
 
     // const token = (process.env.INTERNAL_API_TOKEN || '').trim();
     // logger.info('Token check', 'enqueue-analysis', { hasToken: !!token });
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       trimmedLength: token.length,
     });
 
-    const payload = { jobId, userId, domain };
+    const payload = { jobId, userId, domain, locale };
 
     // Fallback: call local start-analysis
     const base = new URL(request.url).origin;

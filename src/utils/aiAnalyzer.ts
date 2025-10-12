@@ -67,24 +67,24 @@ async function aggregateDual<T>(
   } as AggregatedAnalysisResult<T>;
 }
 
-export async function analyzeBusinessModel(content: string): Promise<AggregatedAnalysisResult<BusinessModelAnalysis>> {
-  return aggregateDual<BusinessModelAnalysis>('analyzeBusinessModel', [content]);
+export async function analyzeBusinessModel(content: string, locale: string): Promise<AggregatedAnalysisResult<BusinessModelAnalysis>> {
+  return aggregateDual<BusinessModelAnalysis>('analyzeBusinessModel', [content, locale]);
 }
 
-export async function analyzeTargetAudience(content: string): Promise<AggregatedAnalysisResult<TargetAudienceAnalysis>> {
-  return aggregateDual<TargetAudienceAnalysis>('analyzeTargetAudience', [content]);
+export async function analyzeTargetAudience(content: string, locale: string): Promise<AggregatedAnalysisResult<TargetAudienceAnalysis>> {
+  return aggregateDual<TargetAudienceAnalysis>('analyzeTargetAudience', [content, locale]);
 }
 
-export async function analyzeCompetitors(content: string, url: string): Promise<AggregatedAnalysisResult<CompetitorAnalysis>> {
-  return aggregateDual<CompetitorAnalysis>('analyzeCompetitors', [content, url]);
+export async function analyzeCompetitors(content: string, url: string, locale: string): Promise<AggregatedAnalysisResult<CompetitorAnalysis>> {
+  return aggregateDual<CompetitorAnalysis>('analyzeCompetitors', [content, url, locale]);
 }
 
-export async function analyzeEEATSignals(content: string, sector: string, audience: string): Promise<AggregatedAnalysisResult<EEATAnalysis>> {
-  return aggregateDual<EEATAnalysis>('analyzeEEATSignals', [content, sector, audience]);
+export async function analyzeEEATSignals(content: string, sector: string, audience: string, locale: string): Promise<AggregatedAnalysisResult<EEATAnalysis>> {
+  return aggregateDual<EEATAnalysis>('analyzeEEATSignals', [content, sector, audience, locale]);
 }
 
-export async function generateDelfiAgenda(prometheusReport: any): Promise<AggregatedAnalysisResult<any>> {
-  return aggregateDual<any>('generateDelfiAgenda', [prometheusReport]);
+export async function generateDelfiAgenda(prometheusReport: any, locale: string): Promise<AggregatedAnalysisResult<any>> {
+  return aggregateDual<any>('generateDelfiAgenda', [prometheusReport, locale]);
 }
 
 // export default {};

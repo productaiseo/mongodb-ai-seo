@@ -178,11 +178,12 @@ export async function checkContentVisibility(
     temperature?: number;
     apiKey?: string;
     useGrounding?: boolean;
-  }
+  },
+  locale: string = 'en',
 ): Promise<ContentVisibilityResult> {
   try {
     logger.info(
-      `Gemini ile içerik görünürlüğü kontrolü: ${domain}, Sorgu: "${query}"`,
+      `Gemini ile içerik görünürlüğü kontrolü: ${domain}, Sorgu: "${query}" ${locale}`,
       'gemini-visibility-check'
     );
 
@@ -194,7 +195,7 @@ export async function checkContentVisibility(
 
     const temperature = options?.temperature ?? 0.3;
     const startTime = Date.now();
-    const prompt = PROMPTS.GEMINI.CHECK_VISIBILITY(domain, query);
+    const prompt = PROMPTS.GEMINI.CHECK_VISIBILITY(domain, query, locale);
 
     // We keep this manual call (not using wrapper) to access grounding metadata.
     const request: GenerateContentRequest = {
@@ -267,14 +268,15 @@ export async function checkContentVisibility(
 
 export async function generatePotentialQueries(
   domain: string,
+  locale: string = 'en',
   options?: { model?: string; temperature?: number; apiKey?: string; count?: number }
 ): Promise<any> {
   try {
-    logger.info(`Gemini ile potansiyel sorgular oluşturuluyor: ${domain}`, 'gemini-api');
+    logger.info(`Gemini ile potansiyel sorgular oluşturuluyor: ${domain} ${locale}`, 'gemini-api');
 
     const model = getGeminiModel(options?.apiKey, options?.model || MODEL_NAMES.PRO_LATEST);
     const count = options?.count || 15;
-    const prompt = PROMPTS.GEMINI.GENERATE_QUERIES(domain, count);
+    const prompt = PROMPTS.GEMINI.GENERATE_QUERIES(domain, count, locale);
 
     const request: GenerateContentRequest = {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -302,183 +304,11 @@ export async function generatePotentialQueries(
   }
 }
 
-/* 
-export async function generateEnhancedAnalysisReport(
-  analysisData: any,
-  options?: { model?: string; temperature?: number; apiKey?: string; maxRecommendations?: number }
-): Promise<any> {
-  // Trim huge blobs to avoid 400s
-  const trimmed = (() => {
-    const pick = <T extends object>(obj: T, keys: (keyof T)[]) =>
-      Object.fromEntries(keys.filter(k => (obj as any)?.[k] !== undefined).map(k => [k, (obj as any)[k]]));
-
-    return {
-      domain: analysisData?.domain,
-      // keep only concise perf summary if you store both lab/field in your schema
-      performanceReport: pick(analysisData?.performanceReport || {}, ['lab', 'field']),
-      arkheReport: analysisData?.arkheReport
-        ? {
-            businessModel: analysisData.arkheReport.businessModel,
-            targetAudience: analysisData.arkheReport.targetAudience,
-            competitors: Array.isArray(analysisData.arkheReport?.competitors?.businessCompetitors)
-              ? { businessCompetitors: analysisData.arkheReport.competitors.businessCompetitors.slice(0, 10) }
-              : analysisData.arkheReport?.competitors,
-          }
-        : null,
-      prometheusReport: analysisData?.prometheusReport
-        ? {
-            overallGeoScore: analysisData.prometheusReport.overallGeoScore,
-            // drop per-metric details to keep token usage small
-            pillars: Object.fromEntries(
-              Object.entries(analysisData.prometheusReport.pillars || {}).map(([k, v]: any) => [
-                k,
-                { score: v?.score, weight: v?.weight },
-              ])
-            ),
-          }
-        : null,
-      delfiAgenda: analysisData?.delfiAgenda
-        ? {
-            agenda: Array.isArray(analysisData.delfiAgenda?.agenda)
-              ? analysisData.delfiAgenda.agenda.slice(0, 10)
-              : null,
-          }
-        : null,
-      generativePerformanceReport: analysisData?.generativePerformanceReport
-        ? {
-            shareOfGenerativeVoice: analysisData.generativePerformanceReport.shareOfGenerativeVoice,
-            citationAnalysis: analysisData.generativePerformanceReport.citationAnalysis,
-            sentimentAnalysis: analysisData.generativePerformanceReport.sentimentAnalysis,
-            accuracyAndHallucination: analysisData.generativePerformanceReport.accuracyAndHallucination,
-          }
-        : null,
-      createdAt: analysisData?.createdAt,
-    };
-  })();
-
-  logger.info(
-    `Gemini ile gelişmiş analiz raporu oluşturuluyor: ${trimmed.domain}`,
-    'gemini-enhanced-analysis',
-    { dataSize: JSON.stringify(trimmed).length }
-  );
-
-  const basePrompt =
-    `Sen uzman bir AI SEO danışmanısın. Aşağıdaki JSON verilerine dayanarak yalnızca aşağıdaki JSON şemasına uygun yanıt döndür:\n` +
-    `{\n  "enhancedAnalysis": {\n    "executiveSummary": string,\n    "topFindings": string[],\n    "priorityActions": [{ "action": string, "impact": "high|medium|low", "effort": "high|medium|low"}],\n    "quickWins": string[],\n    "risks": string[]\n  }\n}\n\nVERİ:\n` +
-    `${JSON.stringify(trimmed).slice(0, 120_000)}\n`;
-
-// inside generateEnhancedAnalysisReport
-const SCHEMA = {
-  type: "object",
-  properties: {
-    enhancedAnalysis: {
-      type: "object",
-      properties: {
-        executiveSummary: { type: "string" },
-        topFindings: { type: "array", items: { type: "string" } },
-        priorityActions: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              action: { type: "string" },
-              impact: { type: "string", enum: ["high","medium","low"] },
-              effort: { type: "string", enum: ["high","medium","low"] },
-            },
-            required: ["action","impact","effort"]
-          }
-        },
-        quickWins: { type: "array", items: { type: "string" } },
-        risks: { type: "array", items: { type: "string" } },
-      },
-      required: ["executiveSummary","topFindings","priorityActions","quickWins","risks"]
-    }
-  },
-  required: ["enhancedAnalysis"]
-} as const;
-
-const tryOnce = async (modelName: string, payloadJSON: string) => {
-  const model = getGeminiModel(options?.apiKey, modelName, false);
-  const request: GenerateContentRequest = {
-    contents: [{ role: 'user', parts: [{ text: basePrompt.replace(/\s+VERİ:[\s\S]*$/, '') + "\nVERİ:\n" + payloadJSON }] }],
-    generationConfig: {
-      temperature: options?.temperature ?? 0.2,
-      maxOutputTokens: 4096, // was 2048
-      responseMimeType: 'application/json',
-      responseSchema: SCHEMA as any, // <-- enforce strict structure
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUAL_CONTENT', threshold: 'BLOCK_NONE' },
-    ] as any,
-  };
-  const text = await generateContentWithTimeout(model, request, 'generateEnhancedAnalysisReport');
-  const parsed = safeParse<any>(text);
-  return { enhancedAnalysis: parsed?.enhancedAnalysis ?? {} };
-};
-
-try {
-  const primary = options?.model || MODEL_NAMES.PRO_LATEST; // try the freshest first
-  const payload1 = JSON.stringify(trimmed).slice(0, 60_000);
-  try {
-    return await tryOnce(primary, payload1);
-  } catch (e1:any) {
-    logger.warn('Primary failed; trying PRO then DEFAULT with reduced payload', 'gemini-enhanced-analysis', { e1: e1?.message });
-    const payload2 = JSON.stringify({
-      domain: trimmed.domain,
-      performanceReport: trimmed.performanceReport,
-      prometheusReport: trimmed.prometheusReport,
-      delfiAgenda: trimmed.delfiAgenda,
-    }).slice(0, 30_000);
-
-    try { return await tryOnce(MODEL_NAMES.PRO, payload2); } 
-    catch (e2:any) {
-      try { return await tryOnce(MODEL_NAMES.DEFAULT, payload2); }
-      catch (e3:any) {
-        logger.error('All Gemini attempts failed, returning minimal object', 'gemini-enhanced-analysis', { e1: e1?.message, e2: e2?.message, e3: e3?.message });
-        return {
-          enhancedAnalysis: {
-            executiveSummary: "",
-            topFindings: [],
-            priorityActions: [],
-            quickWins: [],
-            risks: [],
-          },
-          error: 'Gemini parsing failed',
-        };
-      }
-    }
-  }
-} catch (finalErr) {
-  logger.error('Gelişmiş analiz oluşturma hatası', 'gemini-enhanced-analysis', finalErr);
-  return { enhancedAnalysis: {}, error: 'Yanıt oluşturulamadı' };
-}
-
-
-  try {
-    // Try PRO (or requested) first; fall back to DEFAULT if parsing fails or API rejects size
-    const primary = options?.model || MODEL_NAMES.PRO;
-    try {
-      return await tryOnce(primary);
-    } catch (e: any) {
-      logger.warn('Primary Gemini model failed; falling back to DEFAULT', 'gemini-enhanced-analysis', {
-        error: e?.message || e,
-      });
-      return await tryOnce(MODEL_NAMES.DEFAULT);
-    }
-  } catch (finalErr) {
-    logger.error('Gelişmiş analiz oluşturma hatası', 'gemini-enhanced-analysis', finalErr);
-    // keep pipeline alive
-    return { enhancedAnalysis: {}, error: 'Yanıt oluşturulamadı' };
-  }
-}
-*/
 
 export async function generateText(
   prompt: string,
-  options?: { model?: string; temperature?: number; apiKey?: string }
+  options?: { model?: string; temperature?: number; apiKey?: string },
+  locale: string = 'en'
 ): Promise<string> {
   try {
     logger.info('Gemini ile metin oluşturuluyor', 'gemini-generate-text', { promptLength: prompt.length });
@@ -506,10 +336,10 @@ export async function generateText(
 
 /** --- JSON-returning analyzers (all use responseMimeType) --- */
 
-export async function analyzeBusinessModel(content: string): Promise<BusinessModelAnalysis> {
+export async function analyzeBusinessModel(content: string, locale: string = 'en'): Promise<BusinessModelAnalysis> {
   const context = 'gemini-analyzeBusinessModel';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
-  const prompt = PROMPTS.GEMINI.ANALYZE_BUSINESS_MODEL(content);
+  const prompt = PROMPTS.GEMINI.ANALYZE_BUSINESS_MODEL(content, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -518,10 +348,10 @@ export async function analyzeBusinessModel(content: string): Promise<BusinessMod
   return parseJsonResponse<BusinessModelAnalysis>(text, context);
 }
 
-export async function analyzeTargetAudience(content: string): Promise<TargetAudienceAnalysis> {
+export async function analyzeTargetAudience(content: string, locale: string = 'en'): Promise<TargetAudienceAnalysis> {
   const context = 'gemini-analyzeTargetAudience';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
-  const prompt = PROMPTS.GEMINI.ANALYZE_TARGET_AUDIENCE(content);
+  const prompt = PROMPTS.GEMINI.ANALYZE_TARGET_AUDIENCE(content, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -530,10 +360,10 @@ export async function analyzeTargetAudience(content: string): Promise<TargetAudi
   return parseJsonResponse<TargetAudienceAnalysis>(text, context);
 }
 
-export async function analyzeCompetitors(content: string, url: string): Promise<CompetitorAnalysis> {
+export async function analyzeCompetitors(content: string, url: string, locale: string = 'en'): Promise<CompetitorAnalysis> {
   const context = 'gemini-analyzeCompetitors';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
-  const prompt = PROMPTS.GEMINI.ANALYZE_COMPETITORS(content, url);
+  const prompt = PROMPTS.GEMINI.ANALYZE_COMPETITORS(content, url, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -545,11 +375,12 @@ export async function analyzeCompetitors(content: string, url: string): Promise<
 export async function analyzeEEATSignals(
   content: string,
   sector: string,
-  audience: string
+  audience: string,
+  locale: string = 'en'
 ): Promise<EEATAnalysis> {
   const context = 'gemini-analyzeEEATSignals';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
-  const prompt = PROMPTS.GEMINI.ANALYZE_EEAT_SIGNALS(content, sector, audience);
+  const prompt = PROMPTS.GEMINI.ANALYZE_EEAT_SIGNALS(content, sector, audience, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -558,12 +389,12 @@ export async function analyzeEEATSignals(
   return parseJsonResponse<EEATAnalysis>(text, context);
 }
 
-export async function generateDelfiAgenda(prometheusReport: any): Promise<DelfiAgenda> {
+export async function generateDelfiAgenda(prometheusReport: any, locale: string = 'en'): Promise<DelfiAgenda> {
   const context = 'gemini-generateDelfiAgenda';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
   const reportString =
     typeof prometheusReport === 'string' ? prometheusReport : JSON.stringify(prometheusReport, null, 2);
-  const prompt = PROMPTS.GEMINI.GENERATE_DELFI_AGENDA(reportString);
+  const prompt = PROMPTS.GEMINI.GENERATE_DELFI_AGENDA(reportString, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -574,12 +405,13 @@ export async function generateDelfiAgenda(prometheusReport: any): Promise<DelfiA
 
 export async function generateGenerativePerformanceReport(
   content: string,
-  competitors: string[]
+  competitors: string[],
+  locale: string = 'en'
 ): Promise<GenerativePerformanceReport> {
   const context = 'gemini-generateGenerativePerformanceReport';
   const model = getGeminiModel(undefined, MODEL_NAMES.DEFAULT, false);
   // Reuse your OpenAI prompt here as noted in your codebase.
-  const prompt = PROMPTS.OPENAI.GENERATE_GENERATIVE_PERFORMANCE_REPORT(content, competitors);
+  const prompt = PROMPTS.OPENAI.GENERATE_GENERATIVE_PERFORMANCE_REPORT(content, competitors, locale);
   const request: GenerateContentRequest = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' },

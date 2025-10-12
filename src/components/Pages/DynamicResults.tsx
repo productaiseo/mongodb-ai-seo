@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 // import { useParams } from 'next/navigation';
@@ -23,6 +23,7 @@ const DomainResultsPage = ({ domain }: Props) => {
 
   const t = useTranslations("HomePage");
   const l = useTranslations("ResultsPage");
+  const locale = useLocale(); // Get current locale
     
   const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
@@ -65,7 +66,9 @@ const DomainResultsPage = ({ domain }: Props) => {
             'Content-Type': 'application/json',
             // ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
           },
-          body: JSON.stringify({ url: plainDomain, 
+          body: JSON.stringify({ 
+            url: plainDomain,
+            locale: locale,
             // idToken 
           }),
         });
@@ -94,10 +97,11 @@ const DomainResultsPage = ({ domain }: Props) => {
     };
 
     startAnalysis();
-  }, [plainDomain, 
+  }, [plainDomain, locale,
     // isAuthenticated, isLoading
   ]);
 
+  console.log("locale:", locale);
 
   useEffect(() => {
     if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;

@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AppError, ErrorType } from '@/utils/errors';
 import logger from '@/utils/logger';
 import { AnalysisJob, PrometheusReport, MetricScore } from '@/types/geo';
 import { calculatePillarScore } from '@/services/scoringEngine';
-import { PerformanceAnalysis, Metric, PerformanceRating } from '@/types/analysis';
 import { 
   analyzeEEATSignals,
 /*
@@ -165,44 +163,7 @@ export { calculatePillarScore } from '@/services/scoringEngine';
     return formatted;
   }
 
-/*
-function formatPerformanceMetrics(report: PerformanceAnalysis | undefined): Record<string, MetricScore> {
-  if (!report) {
-    return {
-      'veriAlinamadi': { 
-        score: 0, 
-        justification: 'Google PageSpeed Insights verisi alınamadı veya işlenemedi.', 
-        details: 'API anahtarını veya URL\'yi kontrol edin.' 
-      }
-    };
-  }
 
-  const metricsToProcess = report.hasCruxData && report.crux ? report.crux.metrics : report.lighthouse.metrics;
-  const source = report.hasCruxData && report.crux ? 'CrUX' : 'Lighthouse';
-
-  const formattedMetrics: Record<string, MetricScore> = {};
-
-  for (const key in metricsToProcess) {
-    const metric = (metricsToProcess as any)[key] as Metric;
-    formattedMetrics[key] = {
-      score: metric.rating === 'GOOD' ? 95 : metric.rating === 'NEEDS_IMPROVEMENT' ? 50 : 10,
-      justification: `${source} verisine göre ${key.toUpperCase()} değeri ${metric.value.toFixed(2)} (${metric.rating}).`,
-      details: `Kaynak: ${source}`,
-    };
-  }
-
-  // Genel skoru da bir metrik olarak ekle
-  if (source === 'Lighthouse') {
-    formattedMetrics['overallLighthouseScore'] = {
-      score: report.lighthouse.overallScore,
-      justification: `Lighthouse genel performans skoru ${report.lighthouse.overallScore}.`,
-      details: 'Kaynak: Lighthouse',
-    };
-  }
-
-  return formattedMetrics;
-}
-*/
 /**
  * Direklerin ağırlıklı ortalamasını alarak genel GEO skorunu hesaplar.
  * Skoru 0 olan veya 'veriAlinamadi' metriği içeren direkleri hesaplama dışında tutar ve ağırlığı yeniden dağıtır.
@@ -264,8 +225,8 @@ function formatEEATMetrics(eeatAnalysis: EEATAnalysis): Record<string, MetricSco
   };
 }
 
-export async function runPrometheusAnalysis(job: AnalysisJob): Promise<PrometheusReport> {
-  logger.info(`Starting Prometheus analysis for job ${job.id}`, 'prometheus-service');
+export async function runPrometheusAnalysis(job: AnalysisJob, locale: string): Promise<PrometheusReport> {
+  logger.info(`Starting Prometheus analysis for job ${job.id} in locale ${locale}`, 'prometheus-service');
 
   if (!job.arkheReport) {
     throw new AppError(ErrorType.VALIDATION, 'Arkhe report is required for Prometheus analysis.');
@@ -281,7 +242,8 @@ export async function runPrometheusAnalysis(job: AnalysisJob): Promise<Prometheu
     const eeatSignalsResult = await analyzeEEATSignals(
       scrapedContent,
       job.arkheReport?.businessModel?.modelType || 'Unknown',
-      job.arkheReport?.targetAudience?.primaryAudience?.demographics || 'General Audience'
+      job.arkheReport?.targetAudience?.primaryAudience?.demographics || 'General Audience',
+      locale
     );
 
     if (eeatSignalsResult.errors.length > 0) {
@@ -302,23 +264,23 @@ export async function runPrometheusAnalysis(job: AnalysisJob): Promise<Prometheu
     const performanceMetrics = formatPerformanceMetrics(job.performanceReport);
     // Minimal fallback metrics for other pillars (no external API calls here)
     const contentStructureMetrics: Record<string, MetricScore> = {
-      headings: { score: 75, justification: 'Başlık hiyerarşisi genel olarak iyi.' },
-      contentDepth: { score: 70, justification: 'İçerik derinliği yeterli.' },
+      headings: { score: 75, justification: locale === 'tr' ? 'Başlık hiyerarşisi genel olarak iyi.' : 'Good heading structure.' },
+      contentDepth: { score: 70, justification: locale === 'tr' ? 'İçerik derinliği yeterli.' : 'Content depth is sufficient.' },
     };
     const technicalGEOMetrics: Record<string, MetricScore> = {
-      mobileFriendly: { score: 80, justification: 'Mobil uyumluluk iyi.' },
+      mobileFriendly: { score: 80, justification: locale === 'tr' ? 'Mobil uyumluluk iyi.' : 'Mobile friendliness is good.' },
     };
     const structuredDataMetrics: Record<string, MetricScore> = {
-      schemaOrg: { score: 50, justification: 'Varsayılan değerlendirme.' },
+      schemaOrg: { score: 50, justification: locale === 'tr' ? 'Varsayılan değerlendirme.' : 'Default assessment.' },
     };
     const brandAuthorityMetrics: Record<string, MetricScore> = {
-      mentions: { score: 60, justification: 'Sınırlı dış mention.' },
+      mentions: { score: 60, justification: locale === 'tr' ? 'Sınırlı dış mention.' : 'Limited external mentions.' },
     };
     const entityOptimizationMetrics: Record<string, MetricScore> = {
-      knowledgeGraphPresence: { score: 50, justification: 'Varsayılan değerlendirme.' },
+      knowledgeGraphPresence: { score: 50, justification: locale === 'tr' ? 'Varsayılan değerlendirme.' : 'Default assessment.' },
     };
     const contentStrategyMetrics: Record<string, MetricScore> = {
-      topicalCoverage: { score: 65, justification: 'Sınırlı konu kapsaması.' },
+      topicalCoverage: { score: 65, justification: locale === 'tr' ? 'Sınırlı konu kapsaması.' : 'Limited topical coverage.' },
     };
 
     const pillars: PrometheusReport['pillars'] = {
@@ -335,8 +297,13 @@ export async function runPrometheusAnalysis(job: AnalysisJob): Promise<Prometheu
 
     const overallGeoScore = calculateOverallGeoScore(pillars);
 
+    //localization for the scoreInterpretation field values which are: Lider, Gelişmekte, Zayıf
+    let scoreInterpretation = locale === 'tr' ? 'Zayıf' : 'Weak';
+    if (overallGeoScore >= 80) scoreInterpretation = locale === 'tr' ? 'Lider' : 'Leader';
+    else if (overallGeoScore >= 50) scoreInterpretation = locale === 'tr' ? 'Gelişmekte' : 'Developing';
+
     const report: PrometheusReport = {
-      scoreInterpretation: overallGeoScore >= 80 ? 'Lider' : overallGeoScore >= 50 ? 'Gelişmekte' : 'Zayıf',
+      scoreInterpretation,
       executiveSummary: eeatSignalsResult.combined.executiveSummary || 'The site has a solid foundation but needs improvement in E-E-A-T signals and brand authority.',
       overallGeoScore,
       geoScoreDetails: eeatSignalsResult.combined.geoScoreDetails,

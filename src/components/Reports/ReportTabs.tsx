@@ -36,6 +36,7 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
     generativePerformanceReport,
   } = jobReport;
 
+  console.log('Job Report:', jobReport);
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: t('sections.overview.tabTitle'), icon: <FiLayout /> },
     { id: 'prometheus', label: t('sections.geoPerformance.tabTitle'), icon: <FiBarChart2 /> },

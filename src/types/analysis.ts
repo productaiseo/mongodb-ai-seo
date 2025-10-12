@@ -59,7 +59,7 @@ export interface EEATComponent {
 
 export interface EEATAnalysis {
   actionPlan: ActionPlanItem[];
-  geoScoreDetails: any; // Esnek yapı, AI tarafından sağlanan çeşitli sinyalleri içerebilir
+  geoScoreDetails: any;
   executiveSummary: string;
   eeatAnalysis: EEATAnalysis;
   experience: EEATComponent;
@@ -77,10 +77,10 @@ export interface PrometheusAIResponse {
   executiveSummary: string;
   actionPlan: ActionPlanItem[];
   geoScoreDetails: {
-    pazarPotansiyeli: 'yüksek' | 'orta' | 'düşük';
-    rekabetYogunlugu: 'yüksek' | 'orta' | 'düşük';
-    buyumeTrendi: 'pozitif' | 'negatif' | 'stabil';
-    markaBilinirligi: 'yüksek' | 'orta' | 'düşük';
+    marketPotential: string;
+    competitionIntensity: string;
+    growthTrend: string;
+    brandAwareness: string;
   };
   generativePerformanceReport?: GenerativePerformanceReport;
 }

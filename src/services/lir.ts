@@ -3,7 +3,7 @@ import logger from '@/utils/logger';
 import { PrometheusReport, DelfiAgenda } from '@/types/geo';
 import { generateDelfiAgenda } from '@/utils/aiAnalyzer';
 
-export async function runLirAnalysis(prometheusReport: PrometheusReport): Promise<DelfiAgenda> {
+export async function runLirAnalysis(prometheusReport: PrometheusReport, locale: string): Promise<DelfiAgenda> {
   logger.info(`Starting Lir analysis`, 'lir-service');
 
   if (!prometheusReport) {
@@ -11,7 +11,7 @@ export async function runLirAnalysis(prometheusReport: PrometheusReport): Promis
   }
 
   try {
-    const delfiAgendaResult = await generateDelfiAgenda(prometheusReport);
+    const delfiAgendaResult = await generateDelfiAgenda(prometheusReport, locale);
 
     if (delfiAgendaResult.errors.length > 0) {
       throw new AppError(ErrorType.ANALYSIS_FAILED, `Lir analysis encountered AI errors: ${delfiAgendaResult.errors.join(', ')}`);

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // --- Parse body ---
     const body = await request.json();
-    const { jobId, userId, domain } = body || {};
+    const { jobId, userId, domain, locale } = body || {};
     if (!jobId || !userId || !domain) {
       return NextResponse.json({ error: 'jobId, userId ve domain zorunludur' }, { status: 400 });
     }
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     // --- DB: connect & early status update ---
     await dbConnect();
 
+    console.log("start analysis", locale);
     // Mark as PROCESSING early so UI doesn't look stuck on QUEUED
     try {
       await AnalysisJobModel.updateOne(
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
       id: jobId,
       userId,
       url,
+      locale: locale || 'en', // default to 'en' if not provided
       status: 'PROCESSING',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

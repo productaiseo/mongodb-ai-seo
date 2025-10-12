@@ -71,8 +71,13 @@ async function appendJobEvent(jobId: string, event: { step: string; status: 'STA
  * Firestore yerine MongoDB/Mongoose kullanır.
  */
 export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
-  const { id, url } = job;
+  const { id, url, locale } = job;
 
+  console.log("orchestrateAnalysis locale", locale);
+
+  if (!id || !url) {
+    throw new AppError(ErrorType.VALIDATION, 'Job must have id and url');
+  }
 
   // Log environment info
   logger.info(`[Orchestrator] Environment:`, 'orchestrateAnalysis', {
@@ -82,7 +87,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     timestamp: new Date().toISOString()
   });
 
-  logger.info(`[Orchestrator] Analiz süreci başlatıldı: ${id} - ${url}`, 'orchestrateAnalysis');
+  logger.info(`[Orchestrator] The analysis process has been initiated: ${id} - ${url}`, 'orchestrateAnalysis');
 
   // Add heartbeat logging to detect where it hangs
   const heartbeat = setInterval(() => {
@@ -141,7 +146,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     // 3) Arkhe (soft-fail)
     job = await updateJob(job, { status: 'PROCESSING_ARKHE' });
     try {
-      const arkheAnalysisResult = await runArkheAnalysis(job);
+      const arkheAnalysisResult = await runArkheAnalysis(job, locale);
       if ((arkheAnalysisResult as any)?.error) throw new Error((arkheAnalysisResult as any).error);
       job = await updateJob(job, { arkheReport: arkheAnalysisResult as any });
     } catch (e: any) {
@@ -151,12 +156,12 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
 
     // 4) Prometheus
     job = await updateJob(job, { status: 'PROCESSING_PROMETHEUS' });
-    const prometheusReport = await runPrometheusAnalysis(job);
+    const prometheusReport = await runPrometheusAnalysis(job, locale);
     job = await updateJob(job, { prometheusReport });
 
     // 5) Lir (Delfi agenda)
     job = await updateJob(job, { status: 'PROCESSING_LIR' });
-    const delfiAgenda = await runLirAnalysis(prometheusReport);
+    const delfiAgenda = await runLirAnalysis(prometheusReport, locale);
     job = await updateJob(job, { delfiAgenda });
 
     // 6) Generative Performance
@@ -165,27 +170,6 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     const generativePerformanceReport = await runGenerativePerformanceAnalysis(job, targetBrand);
     job = await updateJob(job, { generativePerformanceReport });
     try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'COMPLETED' }); } catch {}
-
-/* 
-    // Enhanced (narrative)
-    try {
-      try { await appendJobEvent(id, { step: 'ENHANCED', status: 'STARTED' }); } catch {}
-      const analysisData: any = {
-        domain: new URL(job.url).hostname,
-        performanceReport: job.performanceReport,
-        arkheReport: job.arkheReport,
-        prometheusReport: job.prometheusReport,
-        delfiAgenda: job.delfiAgenda,
-        generativePerformanceReport: job.generativePerformanceReport,
-        createdAt: job.createdAt,
-      };
-      const enhanced = await generateEnhancedAnalysisReport(analysisData);
-      job = await updateJob(job, { ...(enhanced || {} as any) });
-      try { await appendJobEvent(id, { step: 'ENHANCED', status: 'COMPLETED' }); } catch {}
-    } catch (e) {
-      logger.warn('Enhanced analysis failed; continuing without it', 'orchestrateAnalysis');
-    }
-*/
 
     // 7) Complete
     const finalGeoScore = (prometheusReport as any)?.overallGeoScore;

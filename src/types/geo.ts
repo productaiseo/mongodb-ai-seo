@@ -54,10 +54,10 @@ export interface ArkheReport {
 }
 
 export interface GeoScore {
-  pazarPotansiyeli: 'yüksek' | 'orta' | 'düşük';
-  rekabetYogunlugu: 'yüksek' | 'orta' | 'düşük';
-  buyumeTrendi: 'pozitif' | 'negatif' | 'stabil';
-  markaBilinirligi: 'yüksek' | 'orta' | 'düşük';
+  marketPotential: string;
+  competitionIntensity: string;
+  growthTrend: "positive" | "negative" | "stable" | undefined;
+  brandAwareness: string;
 }
 
 export interface ActionPlanItem {
@@ -87,7 +87,7 @@ export interface CompetitorPerformanceData {
 }
 
 export interface PrometheusReport {
-  scoreInterpretation: 'Zayıf' | 'Gelişmekte' | 'Lider';
+  scoreInterpretation: string;
   executiveSummary: string;
   overallGeoScore: number;
   geoScoreDetails: GeoScore;
@@ -175,6 +175,7 @@ export interface AnalysisJob {
   queryId?: string; // Postgres'teki sorgu ID'si
   userId: string;
   url: string;
+  locale: string; // 'en', 'tr',
   status: 'QUEUED' | 'PROCESSING' | 'PROCESSING_SCRAPE' | 'PROCESSING_PSI' | 'PROCESSING_ARKHE' | 'PROCESSING_PROMETHEUS' | 'PROCESSING_LIR' | 'PROCESSING_GENERATIVE_PERFORMANCE' | 'PROCESSING_STRATEGIC_IMPACT' | 'COMPLETED' | 'FAILED';
   createdAt: string; // ISO 8601 formatında tarih
   updatedAt: string; // ISO 8601 formatında tarih
