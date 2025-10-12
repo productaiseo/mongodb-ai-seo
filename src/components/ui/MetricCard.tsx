@@ -3,18 +3,20 @@
 import React from 'react';
 import { FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
 
+
+type Trend = 'positive' | 'negative' | 'stable' | 'pozitif' | 'negatif' | 'stabil';
 interface MetricCardProps {
   title: string;
   value: string;
   description: string;
-  trend?: 'pozitif' | 'negatif' | 'stabil';
+  trend?: Trend;
 }
 
-const TrendIcon: React.FC<{ trend?: 'pozitif' | 'negatif' | 'stabil' }> = ({ trend }) => {
-  if (trend === 'pozitif') {
+const TrendIcon: React.FC<{ trend?: Trend }> = ({ trend }) => {
+  if (trend === 'positive' || trend === 'pozitif') {
     return <FiTrendingUp className="text-green-400" />;
   }
-  if (trend === 'negatif') {
+  if (trend === 'negative' || trend === 'negatif') {
     return <FiTrendingDown className="text-red-400" />;
   }
   return <FiMinus className="text-yellow-400" />;

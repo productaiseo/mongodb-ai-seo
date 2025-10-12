@@ -74,9 +74,12 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
   const t = useTranslations("ResultsPage");
 
   const interpretationIcons: { [key: string]: React.ReactNode } = {
-    Zayıf: <FiAlertTriangle className="mr-2" />,
-    Gelişmekte: <FiTrendingUp className="mr-2" />,
-    Lider: <FiAward className="mr-2" />,
+    'Zayıf': <FiAlertTriangle className="mr-2" />,
+    'Weak': <FiAlertTriangle className="mr-2" />,
+    'Gelişmekte': <FiTrendingUp className="mr-2" />,
+    'Developing': <FiTrendingUp className="mr-2" />,
+    'Lider': <FiAward className="mr-2" />,
+    'Leading': <FiAward className="mr-2" />,
   };
 
   return (
@@ -123,24 +126,24 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
         <div className="grid grid-cols-2 gap-4 pt-6 border-t border-blue-800/30">
           <MetricCard 
             title={t('sections.overview.sections.marketPotential.title')}
-            value={geoScoreDetails.pazarPotansiyeli ? geoScoreDetails.pazarPotansiyeli.charAt(0).toUpperCase() + geoScoreDetails.pazarPotansiyeli.slice(1) : 'N/A'}
-            trend={geoScoreDetails.buyumeTrendi}
+            value={geoScoreDetails.marketPotential ? geoScoreDetails.marketPotential.charAt(0).toUpperCase() + geoScoreDetails.marketPotential.slice(1) : 'N/A'}
+            trend={geoScoreDetails?.growthTrend}
             description={t('sections.overview.sections.marketPotential.description')}
           />
           <MetricCard 
             title={t('sections.overview.sections.competitionIntensity.title')}
-            value={geoScoreDetails.rekabetYogunlugu ? geoScoreDetails.rekabetYogunlugu.charAt(0).toUpperCase() + geoScoreDetails.rekabetYogunlugu.slice(1) : 'N/A'}
+            value={geoScoreDetails.competitionIntensity ? geoScoreDetails.competitionIntensity.charAt(0).toUpperCase() + geoScoreDetails.competitionIntensity.slice(1) : 'N/A'}
             description={t('sections.overview.sections.competitionIntensity.description')}
           />
           <MetricCard 
             title={t('sections.overview.sections.growthTrend.title')}
-            value={geoScoreDetails.buyumeTrendi ? geoScoreDetails.buyumeTrendi.charAt(0).toUpperCase() + geoScoreDetails.buyumeTrendi.slice(1) : 'N/A'}
-            trend={geoScoreDetails.buyumeTrendi}
+            value={geoScoreDetails.growthTrend ? geoScoreDetails.growthTrend.charAt(0).toUpperCase() + geoScoreDetails.growthTrend.slice(1) : 'N/A'}
+            trend={geoScoreDetails?.growthTrend}
             description={t('sections.overview.sections.growthTrend.description')}
           />
           <MetricCard 
             title={t('sections.overview.sections.brandAwareness.title')}
-            value={geoScoreDetails.markaBilinirligi ? geoScoreDetails.markaBilinirligi.charAt(0).toUpperCase() + geoScoreDetails.markaBilinirligi.slice(1) : 'N/A'}
+            value={geoScoreDetails.brandAwareness ? geoScoreDetails.brandAwareness.charAt(0).toUpperCase() + geoScoreDetails.brandAwareness.slice(1) : 'N/A'}
             description={t('sections.overview.sections.brandAwareness.description')}
           />
         </div>

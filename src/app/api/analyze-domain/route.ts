@@ -10,6 +10,8 @@ import type { AnalysisJob } from '@/types/geo';
 import logger from '@/utils/logger';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 800; // 800 seconds
 
 function normalizeUrl(raw: string): string {
   if (!raw) return raw;
@@ -31,8 +33,8 @@ function cleanUndefined<T>(v: T): T {
 
 export async function POST(request: NextRequest) {
   try {
-    const payloadJson = await request.json();
-    const url: string | undefined = payloadJson?.url;
+
+    const { url, locale, } = await request.json();
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json(
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
       id: jobId,
       userId: 'public',
       url: normalizedUrl,
+      locale,
       status: 'QUEUED',
       createdAt: nowIso,
       updatedAt: nowIso,
@@ -93,8 +96,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server is not configured' }, { status: 500 });
     }
 
+    console.log("locale analyze-domain", locale);
+
     const enqueueUrl = `${baseUrl}/api/internal/enqueue-analysis`;
-    const body = { jobId, userId: 'public', domain: normalizedUrl };
+    const body = { jobId, userId: 'public', domain: normalizedUrl, locale };
+    console.log("analyze-domain body", body);
     const ts = Date.now().toString();
     const payloadToSign = `${ts}.${JSON.stringify(body)}`;
     const sig = crypto.createHmac('sha256', key).update(payloadToSign).digest('hex');

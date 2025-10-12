@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useTranslations } from "next-intl";
 import { motion } from 'framer-motion';
 import { FiZap, FiTool, FiBarChart2 } from 'react-icons/fi';
