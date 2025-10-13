@@ -145,3 +145,10 @@ export interface PerformanceAnalysis {
     metrics: LighthouseMetrics;
   };
 }
+
+export interface ScrapeResult {
+  html: string;
+  content: string;
+  robotsTxt?: string;
+  llmsTxt?: string;
+}

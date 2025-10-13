@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import 'server-only';
 import { scrapWithPuppeteer } from '@/services/puppeteerScraper';
-// import { scrapWithPlaywright } from '@/services/playwrightScraper';
 import { runPerformanceAnalysis } from '@/services/performanceAnalyzer';
 import { runArkheAnalysis } from '@/services/arkhe';
 import { runPrometheusAnalysis } from '@/services/prometheus';
 import { runLirAnalysis } from '@/services/lir';
 import { runGenerativePerformanceAnalysis } from '@/services/generativePerformance';
-// import { generateEnhancedAnalysisReport } from '@/utils/gemini';
 
 import { AnalysisJob } from '@/types/geo';
 import logger from '@/utils/logger';
@@ -15,9 +13,8 @@ import { AppError, ErrorType } from '@/utils/errors';
 
 import dbConnect from '@/lib/dbConnect';
 import { AnalysisJobModel } from '@/models/AnalysisJob';
-import { JobEventModel } from '@/models/JobEvent'; // optional; see model below
+import { JobEventModel } from '@/models/JobEvent';
 
-// If you still store/query extra metadata in Postgres, keep these:
 import { updateQueryStatus, saveReport } from '@/lib/database';
 
 /** Utility: remove undefined recursively so we don't write undefineds into Mongo */
@@ -43,7 +40,7 @@ async function updateJob(job: AnalysisJob, updates: Partial<AnalysisJob>): Promi
   await AnalysisJobModel.updateOne(
     { id: job.id },
     { $set: payload },
-    { upsert: true } // in case the job doc wasn't created yet
+    { upsert: true }
   ).exec();
 
   return { ...job, ...updatesWithTimestamp };
@@ -67,8 +64,7 @@ async function appendJobEvent(jobId: string, event: { step: string; status: 'STA
 }
 
 /**
- * Tüm analiz sürecini yönetir: Scrape → PSI → Arkhe → Prometheus → Lir → Generative Performance → Enhanced Report.
- * Firestore yerine MongoDB/Mongoose kullanır.
+ * Optimized orchestration: Scrape once, reuse data for all analysis steps
  */
 export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
   const { id, url, locale } = job;
@@ -111,65 +107,94 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     job = await updateJob(job, { status: 'PROCESSING' });
     try { await appendJobEvent(id, { step: 'INIT', status: 'COMPLETED' }); } catch {}
 
-    // 1) SCRAPE
+    // ========================================
+    // 1) SCRAPE - Do this ONCE and reuse
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_SCRAPE' });
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'STARTED' }); } catch {}
-    const { content: scrapedContent, html: scrapedHtml } = await scrapWithPuppeteer(url);
-    // const { content: scrapedContent, html: scrapedHtml } = await scrapWithPlaywright(url);
+    
+    logger.info(`[Orchestrator] Starting Puppeteer scrape for ${url}`, 'orchestrateAnalysis');
+    const scrapedData = await scrapWithPuppeteer(url);
+    const { content: scrapedContent, html: scrapedHtml, robotsTxt, llmsTxt } = scrapedData;
+    
+    logger.info(`[Orchestrator] Scrape completed. Content length: ${scrapedContent.length}`, 'orchestrateAnalysis');
     job = await updateJob(job, { scrapedContent, scrapedHtml });
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'COMPLETED' }); } catch {}
 
-    // 2. Performans Analizi
+    // ========================================
+    // 2) ARKHE - Use scraped data (no re-scrape)
+    // ========================================
+    job = await updateJob(job, { status: 'PROCESSING_ARKHE' });
+    try { await appendJobEvent(id, { step: 'ARKHE', status: 'STARTED' }); } catch {}
+    
+    try {
+      logger.info(`[Orchestrator] Starting Arkhe analysis (using cached scrape data)`, 'orchestrateAnalysis');
+      const arkheAnalysisResult = await runArkheAnalysis(job, scrapedData, locale);
+      
+      if ((arkheAnalysisResult as any)?.error) throw new Error((arkheAnalysisResult as any).error);
+      job = await updateJob(job, { arkheReport: arkheAnalysisResult as any });
+      try { await appendJobEvent(id, { step: 'ARKHE', status: 'COMPLETED' }); } catch {}
+      logger.info(`[Orchestrator] Arkhe analysis completed`, 'orchestrateAnalysis');
+    } catch (e: any) {
+      logger.warn(`[Orchestrator] Arkhe analysis failed, continuing...`, 'orchestrateAnalysis', { error: e.message });
+      job = await updateJob(job, { arkheReport: { error: e?.message || 'Arkhe failed' } as any });
+      try { await appendJobEvent(id, { step: 'ARKHE', status: 'FAILED', meta: { message: e?.message } } as any); } catch {}
+    }
+
+    // ========================================
+    // 3) PERFORMANCE ANALYSIS (PSI)
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_PSI' });
     try { await appendJobEvent(id, { step: 'PSI', status: 'STARTED' }); } catch {}
+    
     try {
+      logger.info(`[Orchestrator] Starting Performance analysis`, 'orchestrateAnalysis');
       const performanceResult = await runPerformanceAnalysis(url);
       job = await updateJob(job, { performanceReport: performanceResult } as any);
       try { await appendJobEvent(id, { step: 'PSI', status: 'COMPLETED' }); } catch {}
+      logger.info(`[Orchestrator] Performance analysis completed`, 'orchestrateAnalysis');
     } catch (e: any) {
-      // Don’t crash the orchestration; record the failure and proceed
+      logger.warn(`[Orchestrator] PSI failed, continuing...`, 'orchestrateAnalysis', { error: e.message });
       job = await updateJob(job, { performanceReport: { error: e?.message || 'PSI failed' } as any });
       try { await appendJobEvent(id, { step: 'PSI', status: 'FAILED', meta: { message: e?.message } } as any); } catch {}
-      // Option A (recommended): continue
-      // Option B: rethrow if PSI is critical for later stages
-      // throw e;
-    }
-/* 
-    // 3) Arkhe (critical)
-    job = await updateJob(job, { status: 'PROCESSING_ARKHE' });
-    const arkheAnalysisResult = await runArkheAnalysis(job);
-    if ((arkheAnalysisResult as any)?.error) {
-      throw new AppError(ErrorType.ANALYSIS_FAILED, `Arkhe analysis failed: ${(arkheAnalysisResult as any).error}`);
-    }
-    job = await updateJob(job, { arkheReport: arkheAnalysisResult as any });
-*/
-    // 3) Arkhe (soft-fail)
-    job = await updateJob(job, { status: 'PROCESSING_ARKHE' });
-    try {
-      const arkheAnalysisResult = await runArkheAnalysis(job, locale);
-      if ((arkheAnalysisResult as any)?.error) throw new Error((arkheAnalysisResult as any).error);
-      job = await updateJob(job, { arkheReport: arkheAnalysisResult as any });
-    } catch (e: any) {
-      job = await updateJob(job, { arkheReport: { error: e?.message || 'Arkhe failed' } as any });
-      // continue instead of throwing
     }
 
-    // 4) Prometheus
+    // ========================================
+    // 4) PROMETHEUS
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_PROMETHEUS' });
+    try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'STARTED' }); } catch {}
+    
+    logger.info(`[Orchestrator] Starting Prometheus analysis`, 'orchestrateAnalysis');
     const prometheusReport = await runPrometheusAnalysis(job, locale);
     job = await updateJob(job, { prometheusReport });
+    try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'COMPLETED' }); } catch {}
+    logger.info(`[Orchestrator] Prometheus analysis completed`, 'orchestrateAnalysis');
 
-    // 5) Lir (Delfi agenda)
+    // ========================================
+    // 5) LIR (Delfi agenda)
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_LIR' });
+    try { await appendJobEvent(id, { step: 'LIR', status: 'STARTED' }); } catch {}
+    
+    logger.info(`[Orchestrator] Starting Lir analysis`, 'orchestrateAnalysis');
     const delfiAgenda = await runLirAnalysis(prometheusReport, locale);
     job = await updateJob(job, { delfiAgenda });
+    try { await appendJobEvent(id, { step: 'LIR', status: 'COMPLETED' }); } catch {}
+    logger.info(`[Orchestrator] Lir analysis completed`, 'orchestrateAnalysis');
 
-    // 6) Generative Performance
+    // ========================================
+    // 6) GENERATIVE PERFORMANCE
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_GENERATIVE_PERFORMANCE' });
+    try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'STARTED' }); } catch {}
+    
+    logger.info(`[Orchestrator] Starting Generative Performance analysis`, 'orchestrateAnalysis');
     const targetBrand = job.arkheReport?.businessModel?.brandName || new URL(job.url).hostname;
     const generativePerformanceReport = await runGenerativePerformanceAnalysis(job, targetBrand);
     job = await updateJob(job, { generativePerformanceReport });
     try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'COMPLETED' }); } catch {}
+    logger.info(`[Orchestrator] Generative Performance analysis completed`, 'orchestrateAnalysis');
 
     // 7) Complete
     const finalGeoScore = (prometheusReport as any)?.overallGeoScore;
@@ -181,14 +206,14 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
       await updateQueryStatus(job.queryId, 'COMPLETED');
     }
 
-    logger.info(`[Orchestrator] Analiz süreci başarıyla tamamlandı: ${id}`, 'orchestrateAnalysis');
+    logger.info(`[Orchestrator] Analysis process completed successfully: ${id}`, 'orchestrateAnalysis');
 
   } catch (error) {
-    logger.error(`[Orchestrator] Analiz sürecinde hata oluştu: ${id}`, 'orchestrateAnalysis', { error });
+    logger.error(`[Orchestrator] Analysis process error: ${id}`, 'orchestrateAnalysis', { error });
     try {
       await updateJob(job, {
         status: 'FAILED',
-        error: error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.',
+        error: error instanceof Error ? error.message : 'Unknown error occurred.',
       });
       if (job.queryId) {
         await updateQueryStatus(job.queryId, 'FAILED');
@@ -201,7 +226,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
 
     throw new AppError(
       ErrorType.ANALYSIS_FAILED,
-      `Analiz orkestrasyonu başarısız oldu: ${id}`,
+      `Analysis orchestration failed: ${id}`,
       { originalError: error }
     );
   } finally {
