@@ -19,6 +19,7 @@ interface Props {
     domain: string;
 }
 
+
 const DomainResultsPage = ({ domain }: Props) => {
 
   const t = useTranslations("HomePage");
@@ -97,7 +98,7 @@ const DomainResultsPage = ({ domain }: Props) => {
     };
 
     startAnalysis();
-  }, [plainDomain, locale,
+  }, [plainDomain, locale, domain
     // isAuthenticated, isLoading
   ]);
 
