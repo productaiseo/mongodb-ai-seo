@@ -40,8 +40,8 @@ const DomainResultsPage = ({ domain }: Props) => {
     { id: '3', label: t('steps.PROCESSING_ARKHE'), status: 'PROCESSING_ARKHE' },
     { id: '4', label: t('steps.PROCESSING_PSI'), status: 'PROCESSING_PSI' },
     { id: '5', label: t('steps.PROCESSING_PROMETHEUS'), status: 'PROCESSING_PROMETHEUS' },
-    { id: '6', label: t('steps.PROCESSING_LIR'), status: 'PROCESSING_LIR' },
-    { id: '7', label: t('steps.PROCESSING_GENERATIVE_PERFORMANCE'), status: 'PROCESSING_GENERATIVE_PERFORMANCE' },
+    { id: '6', label: t('steps.PROCESSING_GENERATIVE_PERFORMANCE'), status: 'PROCESSING_GENERATIVE_PERFORMANCE' },
+    { id: '7', label: t('steps.PROCESSING_LIR'), status: 'PROCESSING_LIR' },
     { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
   ]), [t]);
 
