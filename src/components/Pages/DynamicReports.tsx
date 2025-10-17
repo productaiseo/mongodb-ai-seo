@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
@@ -17,7 +18,9 @@ interface Props {
 function DynamicReports({ domain }: Readonly<Props>) {
 
   const l = useTranslations("ResultsPage");
+  const t = useTranslations("HomePage");
   const locale = useLocale();
+  const router = useRouter();
 
   const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
@@ -37,25 +40,25 @@ function DynamicReports({ domain }: Readonly<Props>) {
         const data = await res.json();
 
         if (data.status !== 'COMPLETED' || !data.job) {
-          // If someone lands here while the job is still running, bounce them to results page to see progress
-          window.location.href = `/results/${encodeURIComponent(plainDomain)}`;
+          // If someone lands here while the job is still running, navigate to results page to see progress
+          router.push(`/results/${encodeURIComponent(plainDomain)}`);
           return;
         }
 
         setReport(data.job);
         setJobId(data.job.id || data.job._id);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.');
+        setError(e instanceof Error ? e.message : t('errors.unexpected'));
       }
     };
     load();
-  }, [plainDomain]);
+  }, [plainDomain, t, router]);
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-950 text-white">
       <main className="flex-1 py-8 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          {report && report.prometheusReport && report.arkheReport && (
+          {report?.prometheusReport && report?.arkheReport && (
             <motion.div
               className="space-y-6"
               initial="hidden"
