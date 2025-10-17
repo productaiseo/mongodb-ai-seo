@@ -1,31 +1,27 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
-
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
-// import { useParams } from 'next/navigation';
+
 import ReportHeader from '@/components/Reports/ReportHeader';
 import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
 import Footer from '@/components/Footer';
 import { AnalysisJob } from '@/types/geo';
-// import { auth } from '@/lib/firebase';
-// import { useAuth } from '@/contexts/AuthContext';
-
 
 interface Props {
-    domain: string;
+  domain: string;
 }
 
-
 const DomainResultsPage = ({ domain }: Props) => {
-
   const t = useTranslations("HomePage");
   const l = useTranslations("ResultsPage");
-  const locale = useLocale(); // Get current locale
-    
+  const locale = useLocale();
+  const router = useRouter();
+
   const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   const [jobId, setJobId] = useState<string | null>(null);
@@ -45,76 +41,87 @@ const DomainResultsPage = ({ domain }: Props) => {
     { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
   ]), [t]);
 
-  // const { isAuthenticated, isLoading } = useAuth();
-
+  // 1) PRE-CHECK: see if a report already exists
   useEffect(() => {
     if (!plainDomain) return;
-    // if (isLoading) return;
-/* 
-    if (!isAuthenticated) {
-      window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(`/results/${encodeURIComponent(plainDomain)}`)}`;
-      return;
-    }
- */
-    const startAnalysis = async () => {
+
+    const precheck = async () => {
       try {
         setError(null);
-        setJobStatus('QUEUED');
-        // const idToken = await auth.currentUser?.getIdToken?.(true);
-        const response = await fetch(`/api/analyze-domain`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
-          },
-          body: JSON.stringify({ 
-            url: plainDomain,
-            locale: locale,
-            // idToken 
-          }),
-        });
 
-        if (!response.ok) {
-          let message = 'Analiz başlatılamadı.';
-          try {
-            const errorData = await response.json();
-            message = (errorData && (errorData.error || errorData.message)) || message;
-          } catch {
-            try { message = (await response.text()) || message; } catch {}
-          }
-          throw new Error(message);
-        }
+        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { cache: 'no-store' });
 
-        const data = await response.json();
-        if (data.mockData) {
-          localStorage.setItem('currentAnalysisData', JSON.stringify(data.mockData));
-          window.location.href = `/ai-report/${encodeURIComponent(plainDomain)}`;
+        if (res.status === 404) {
+          // no report; start fresh
+          await startAnalysis();
           return;
         }
-        setJobId(data.jobId);
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Ön kontrol yapılamadı.');
+        }
+
+        const data = await res.json();
+
+        if (data.status === 'COMPLETED' && data.job) {
+          // redirect to the canonical report page
+          router.replace(`/report/${encodeURIComponent(plainDomain)}`);
+          return;
+        }
+
+        // If there is a running job, resume polling
+        if (data.status && data.jobId) {
+          setJobId(data.jobId);
+          setJobStatus(data.status);
+          return;
+        }
+
+        // Otherwise, start a new analysis
+        await startAnalysis();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
       }
     };
 
-    startAnalysis();
-  }, [plainDomain, locale, domain
-    // isAuthenticated, isLoading
-  ]);
+    const startAnalysis = async () => {
+      setJobStatus('QUEUED');
+      const response = await fetch(`/api/analyze-domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: plainDomain, locale }),
+      });
 
-  console.log("locale:", locale);
+      if (!response.ok) {
+        let message = 'Analiz başlatılamadı.';
+        try {
+          const errorData = await response.json();
+          message = (errorData?.error || errorData?.message) || message;
+        } catch {
+          try { message = (await response.text()) || message; } catch {}
+        }
+        throw new Error(message);
+      }
 
+      const data = await response.json();
+      if (data.mockData) {
+        localStorage.setItem('currentAnalysisData', JSON.stringify(data.mockData));
+        router.replace(`/ai-report/${encodeURIComponent(plainDomain)}`);
+        return;
+      }
+      setJobId(data.jobId);
+    };
+
+    precheck();
+  }, [plainDomain, locale, router]);
+
+  // 2) Poll job status (unchanged)
   useEffect(() => {
     if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
 
     const interval = setInterval(async () => {
       try {
-        // const idToken = await auth.currentUser?.getIdToken?.(true);
-        const response = await fetch(`/api/internal/job-status/${jobId}`, {
-          headers: {
-            // ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
-          },
-        });
+        const response = await fetch(`/api/internal/job-status/${jobId}`);
         if (!response.ok) throw new Error('İş durumu alınamadı.');
 
         const data = await response.json();
@@ -123,6 +130,8 @@ const DomainResultsPage = ({ domain }: Props) => {
         if (data.status === 'COMPLETED') {
           clearInterval(interval);
           setGeoReport(data.job);
+          // Optional: also push to /report page on completion to unify URL
+          // router.replace(`/report/${encodeURIComponent(plainDomain)}`);
         } else if (data.status === 'FAILED') {
           clearInterval(interval);
           setError(data.error || 'Analiz sırasında bir hata oluştu.');
@@ -161,7 +170,9 @@ const DomainResultsPage = ({ domain }: Props) => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">{plainDomain} {l('sections.starting')} </h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">
+                {plainDomain} {l('sections.starting')}
+              </h1>
               <ProgressAnimation steps={getCurrentStep()} progress={progress} />
             </motion.div>
           )}
@@ -173,9 +184,9 @@ const DomainResultsPage = ({ domain }: Props) => {
               animate="visible"
               variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
             >
-              <ReportHeader 
-                domain={plainDomain} 
-                analysisDate={new Date(geoReport.createdAt).toLocaleDateString('tr-TR')} 
+              <ReportHeader
+                domain={plainDomain}
+                analysisDate={new Date(geoReport.createdAt).toLocaleDateString(locale)}
               />
 
               <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
@@ -192,9 +203,6 @@ const DomainResultsPage = ({ domain }: Props) => {
                   <span>{l('downloadReport')}</span>
                 </button>
               </motion.div>
-
-              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-              </motion.div>
             </motion.div>
           )}
 
@@ -208,10 +216,9 @@ const DomainResultsPage = ({ domain }: Props) => {
           )}
         </div>
       </main>
-
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default DomainResultsPage
+export default DomainResultsPage;
