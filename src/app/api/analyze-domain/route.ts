@@ -144,16 +144,7 @@ export async function POST(request: NextRequest) {
         ).exec();
       });
 
-    return NextResponse.json(
-      { jobId, wroteOk }, // response body
-      { 
-        status: 200,
-        headers: {   
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-        },
-      }
-    );
+    return NextResponse.json({ jobId, wroteOk });
   } catch (error) {
     console.error('Error in analyze-domain POST handler:', error);
     return NextResponse.json(

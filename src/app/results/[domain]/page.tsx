@@ -2,12 +2,6 @@
 import { type Metadata } from 'next';
 import DynamicResults from '@/components/Pages/DynamicResults';
 
-
-// Force dynamic rendering - prevents caching
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
-
 // Generate metadata dynamically based on the page parameter
 export async function generateMetadata(
   props: {
@@ -27,6 +21,9 @@ export async function generateMetadata(
 }
 
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DynamicPage(
   props: Readonly<{
     params: Promise<{ domain: string }>;
@@ -36,12 +33,9 @@ export default async function DynamicPage(
   // Extract the domain parameter from the params
   const { domain } = params;
 
-  // Use timestamp to force fresh render
-  const timestamp = Date.now();
-
   return (
     <DynamicResults 
-      key={`${domain}-${timestamp}`}
+      key={domain}
       domain={domain}
     />
   );
