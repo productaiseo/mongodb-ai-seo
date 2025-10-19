@@ -14,7 +14,6 @@ const AnalysisJobSchema = new Schema<AnalysisJob>(
       type: String,
       enum: [
         'QUEUED',
-        'PROCESSING',
         'PROCESSING_SCRAPE',
         'PROCESSING_PSI',
         'PROCESSING_ARKHE',

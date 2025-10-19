@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         { id: jobId },
         {
           $set: {
-            status: 'PROCESSING',
+            status: 'PROCESSING_SCRAPE',
             updatedAt: new Date().toISOString(),
           },
         },
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       userId,
       url,
       locale: locale || 'en', // default to 'en' if not provided
-      status: 'PROCESSING',
+      status: 'PROCESSING_SCRAPE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       finalGeoScore: null,
