@@ -14,7 +14,6 @@ export async function generateStaticParams() {
 
 export async function GET(
   request: NextRequest,
-  // Matches your original signature that used a Promise for params
   props: { params: Promise<{ jobId: string }> }
 ) {
   try {
@@ -22,41 +21,92 @@ export async function GET(
     console.log('[job-status] Fetching job status for', jobId);
 
     if (!jobId) {
-      return NextResponse.json({ error: 'Job ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Job ID is required' }, 
+        { 
+          status: 400,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+          },
+        }
+      );
     }
-
-    /*  // If you later add auth, keep this block and verify ownership:
-    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || '';
-    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    if (!bearer) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    // decode/verify your own JWT here and derive userId to enforce ownership
-    */
 
     await dbConnect();
     const job = await AnalysisJobModel.findOne({ id: jobId }).lean<AnalysisJob>().exec();
 
-    // If not found yet, treat as queued (202) to avoid jarring UX
+    // CRITICAL FIX: If job not found, return 404 instead of QUEUED
+    // This prevents infinite polling on non-existent jobs
     if (!job) {
-      return NextResponse.json({ status: 'QUEUED' }, { status: 202 });
+      console.warn(`[job-status] Job ${jobId} not found in database`);
+      return NextResponse.json(
+        { error: 'Job not found', status: 'NOT_FOUND' }, 
+        { 
+          status: 404,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+          },
+        }
+      );
     }
 
-    /*  // Enforce ownership example (uncomment when you have userId from auth):
-    // if (job.userId && job.userId !== userId) {
-    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    // }
-    */
+    console.log(`[job-status] Job ${jobId} status: ${job.status}`);
 
     if (job.status === 'COMPLETED') {
       // When completed, return full job object
-      return NextResponse.json({ status: job.status, job });
+      return NextResponse.json(
+        { status: job.status, job },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+          },
+        }
+      );
     }
 
-    // Otherwise return just status (and error if present)
-    return NextResponse.json({ status: job.status, error: (job as any).error ?? null });
+    if (job.status === 'FAILED') {
+      return NextResponse.json(
+        { 
+          status: job.status, 
+          error: (job as any).error ?? 'Analysis failed' 
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+          },
+        }
+      );
+    }
+
+    // Return current status for in-progress jobs
+    return NextResponse.json(
+      { 
+        status: job.status, 
+        jobId: job.id,
+        error: (job as any).error ?? null 
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+        },
+      }
+    );
   } catch (error) {
     console.error('[job-status] Error fetching job status', error);
-    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred.' }, 
+      { 
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+        },
+      }
+    );
   }
 }
