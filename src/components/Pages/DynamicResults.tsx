@@ -13,16 +13,15 @@ import Footer from '@/components/Footer';
 import { AnalysisJob } from '@/types/geo';
 
 interface Props {
-  domain: string;
+  plainDomain: string;
 }
 
-const DomainResultsPage = ({ domain }: Props) => {
+const DomainResultsPage = ({ plainDomain }: Props) => {
+
   const t = useTranslations("HomePage");
   const l = useTranslations("ResultsPage");
   const locale = useLocale();
   const router = useRouter();
-
-  const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>('QUEUED');

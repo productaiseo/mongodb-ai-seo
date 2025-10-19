@@ -39,10 +39,12 @@ export default async function DynamicPage(
   // Use timestamp to force fresh render
   const timestamp = Date.now();
 
+  const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
+
   return (
     <DynamicResults 
-      key={`${domain}-${timestamp}`}
-      domain={domain}
+      key={`${plainDomain}-${timestamp}`}
+      plainDomain={plainDomain}
     />
   );
 }
