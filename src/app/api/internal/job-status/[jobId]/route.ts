@@ -50,16 +50,7 @@ export async function GET(
 
     if (job.status === 'COMPLETED') {
       // When completed, return full job object
-      return NextResponse.json(
-        { status: job.status, job }, // response body
-        { 
-          status: 200,
-          headers: {   
-            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma': 'no-cache',
-          },
-        }
-      );
+      return NextResponse.json({ status: job.status, job });
     }
 
     // Otherwise return just status (and error if present)

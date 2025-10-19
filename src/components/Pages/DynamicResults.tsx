@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
@@ -28,7 +28,6 @@ const DomainResultsPage = ({ domain }: Props) => {
   const [jobStatus, setJobStatus] = useState<string | null>('QUEUED');
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Build steps with localized labels
   const jobStatusSteps = useMemo(() => ([
@@ -42,19 +41,54 @@ const DomainResultsPage = ({ domain }: Props) => {
     { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
   ]), [t]);
 
-  // Separate startAnalysis into a stable callback
-  const startAnalysis = useCallback(async () => {
-    try {
+  // 1) PRE-CHECK: see if a report already exists
+  useEffect(() => {
+    if (!plainDomain) return;
+
+    const precheck = async () => {
+      try {
+        setError(null);
+
+        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { cache: 'no-store' });
+
+        if (res.status === 404) {
+          // no report; start fresh
+          await startAnalysis();
+          return;
+        }
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Ön kontrol yapılamadı.');
+        }
+
+        const data = await res.json();
+
+        if (data.status === 'COMPLETED' && data.job) {
+          // redirect to the canonical report page
+          router.replace(`/report/${encodeURIComponent(plainDomain)}`);
+          return;
+        }
+
+        // If there is a running job, resume polling
+        if (data.status && data.jobId) {
+          setJobId(data.jobId);
+          setJobStatus(data.status);
+          return;
+        }
+
+        // Otherwise, start a new analysis
+        await startAnalysis();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
+      }
+    };
+
+    const startAnalysis = async () => {
       setJobStatus('QUEUED');
-      setError(null);
-      
       const response = await fetch(`/api/analyze-domain`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: plainDomain, locale }),
       });
 
@@ -76,92 +110,18 @@ const DomainResultsPage = ({ domain }: Props) => {
         return;
       }
       setJobId(data.jobId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
-    }
-  }, [plainDomain, locale, router]);
-
-  // 1) PRE-CHECK and initialization
-  useEffect(() => {
-    if (!plainDomain) return;
-    
-    // Reset state when domain changes
-    setIsInitialized(false);
-    setJobId(null);
-    setJobStatus('QUEUED');
-    setError(null);
-    setGeoReport(null);
-
-    const precheck = async () => {
-      try {
-        setError(null);
-
-        const res = await fetch(
-          `/api/reports/${encodeURIComponent(plainDomain)}`, 
-          { 
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache',
-            }
-          }
-        );
-
-        if (res.status === 404) {
-          // no report; start fresh
-          await startAnalysis();
-          setIsInitialized(true);
-          return;
-        }
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || 'Ön kontrol yapılamadı.');
-        }
-
-        const data = await res.json();
-
-        if (data.status === 'COMPLETED' && data.job) {
-          // redirect to the canonical report page
-          router.replace(`/report/${encodeURIComponent(plainDomain)}`);
-          return;
-        }
-
-        // If there is a running job, resume polling
-        if (data.status && data.jobId) {
-          setJobId(data.jobId);
-          setJobStatus(data.status);
-          setIsInitialized(true);
-          return;
-        }
-
-        // Otherwise, start a new analysis
-        await startAnalysis();
-        setIsInitialized(true);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
-        setIsInitialized(true);
-      }
     };
 
     precheck();
-  }, [plainDomain, startAnalysis, router]);
+  }, [plainDomain, locale, router]);
 
-  // 2) Poll job status
+  // 2) Poll job status (unchanged)
   useEffect(() => {
-    if (!jobId || !isInitialized || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
+    if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(
-          `/api/internal/job-status/${jobId}`,
-          {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache',
-            }
-          }
-        );
-        
+        const response = await fetch(`/api/internal/job-status/${jobId}`);
         if (!response.ok) throw new Error('İş durumu alınamadı.');
 
         const data = await response.json();
@@ -170,6 +130,8 @@ const DomainResultsPage = ({ domain }: Props) => {
         if (data.status === 'COMPLETED') {
           clearInterval(interval);
           setGeoReport(data.job);
+          // Optional: also push to /report page on completion to unify URL
+          // router.replace(`/report/${encodeURIComponent(plainDomain)}`);
         } else if (data.status === 'FAILED') {
           clearInterval(interval);
           setError(data.error || 'Analiz sırasında bir hata oluştu.');
@@ -181,7 +143,7 @@ const DomainResultsPage = ({ domain }: Props) => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [jobId, jobStatus, isInitialized]);
+  }, [jobId, jobStatus]);
 
 
   const getCurrentStep = () => {
