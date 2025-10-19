@@ -8,6 +8,8 @@ const AnalysisJobSchema = new Schema<AnalysisJob>(
     queryId: { type: String },
     userId: { type: String, required: true },
     url: { type: String, required: true },
+    urlHost: { type: String, index: true },
+    locale: String,
     status: {
       type: String,
       enum: [
@@ -25,8 +27,6 @@ const AnalysisJobSchema = new Schema<AnalysisJob>(
       ],
       required: true,
     },
-    createdAt: { type: String, required: true }, // keep ISO string to match your type
-    updatedAt: { type: String, required: true },
     finalGeoScore: { type: Number, default: null },
 
     scrapedContent: { type: String },
@@ -48,6 +48,8 @@ const AnalysisJobSchema = new Schema<AnalysisJob>(
         _id: false,
       },
     ],
+    createdAt: { type: String, required: true }, // keep ISO string to match your type
+    updatedAt: { type: String, required: true },
   },
   {
     versionKey: false,
