@@ -85,7 +85,7 @@ const EnhancedGeoScoreOverview: React.FC<EnhancedGeoScoreOverviewProps> = ({
   return (
     <div className="bg-blue-900/30 backdrop-blur-md rounded-xl p-6 border border-blue-800/30 space-y-6 h-full flex flex-col">
       <h2 className="text-2xl font-bold text-white">{t('sections.overview.subTitle')}</h2>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col xl:flex-row items-center gap-6">
         <div className="flex-shrink-0">
           <Gauge score={score} />
         </div>

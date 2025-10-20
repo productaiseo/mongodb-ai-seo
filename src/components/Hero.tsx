@@ -11,12 +11,12 @@ const Hero = () => {
   const t = useTranslations("HomePage");
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col items-center px-4 z-10">
+    <div className="container flex flex-col mx-auto items-center gap-12 mt-8 z-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-12"
+        className="text-center max-w-3xl"
       >
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
           {t("title")}{" "}
@@ -33,14 +33,14 @@ const Hero = () => {
         <UrlForm />
       </motion.div>
 
-          <Features />
+      <Features />
 
       {/* Ek içerik - Müşteri logoları veya referanslar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="w-full mt-24 text-center"
+        className="w-full mt-16 text-center"
       >
         <p className="text-white/50 text-sm mb-6">
           {t("TrustingCompanies")}

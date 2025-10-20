@@ -1,5 +1,6 @@
 // import { redirect, notFound } from "next/navigation";
 import { type Metadata } from 'next';
+import Layout from '@/components/Layouts/Layout';
 import DynamicReports from '@/components/Pages/DynamicReports';
 
 // Generate metadata dynamically based on the page parameter
@@ -34,9 +35,11 @@ export default async function DynamicPage(
   const { domain } = params;
 
   return (
-    <DynamicReports 
-      key={domain}
-      domain={domain}
-    />
+    <Layout>
+      <DynamicReports
+        key={domain}
+        domain={domain}
+      />
+    </Layout>
   );
 }

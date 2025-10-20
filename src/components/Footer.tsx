@@ -4,7 +4,7 @@ const Footer = () => {
   const t = useTranslations("Footer");
 
   return (
-    <footer className="w-full mt-24 py-8 border-t border-white/10">
+    <footer className="container mt-24 py-8 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <div className="text-white/60 text-sm mb-4 md:mb-0">
           © {t("company")} {t("rights")}
