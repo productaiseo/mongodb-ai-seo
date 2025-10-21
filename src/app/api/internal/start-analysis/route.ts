@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 import { orchestrateAnalysis } from '@/services/analysisOrchestrator';
 import logger from '@/utils/logger';
@@ -15,58 +14,12 @@ export const maxDuration = 800; // 800 seconds
 
 export async function POST(request: NextRequest) {
   try {
-    // --- Auth & Signature checks (same semantics as your Firebase version) ---
-    const token = (request.headers.get('x-internal-token') || '').trim();
-    const ts = request.headers.get('x-timestamp') || '';
-    const signature = request.headers.get('x-signature') || '';
+    // Extract parameters from request body
+    const { jobId, userId, domain, url, locale } = await request.json();
 
-    const serverToken = (process.env.INTERNAL_API_TOKEN || '').trim();
-    if (!serverToken) {
-      console.error('[internal-start] INTERNAL_API_TOKEN missing in env');
-      logger.error('INTERNAL_API_TOKEN missing in env', 'internal-start-analysis');
-      return NextResponse.json({ error: 'Server is not configured' }, { status: 500 });
+    if (!jobId || !userId || !domain || !url) {
+      return NextResponse.json({ error: 'jobId, userId, domain ve url zorunludur' }, { status: 400 });
     }
-
-    if (token !== serverToken) {
-      console.error(
-        '[internal-start] Unauthorized: token mismatch. len(client)=',
-        token?.length || 0,
-        ' len(server)=',
-        serverToken?.length || 0
-      );
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    // Optional HMAC validation with timestamp freshness check
-    if (ts && signature) {
-      const tsNum = Number(ts);
-      if (!Number.isFinite(tsNum) || Math.abs(Date.now() - tsNum) > 5 * 60 * 1000) {
-        console.error('[internal-start] Timestamp expired or invalid:', ts);
-        return NextResponse.json({ error: 'Timestamp expired' }, { status: 403 });
-      }
-
-      const raw = await request.clone().text();
-      let canonical = raw;
-      try {
-        canonical = JSON.stringify(JSON.parse(raw));
-      } catch {}
-      const payload = `${ts}.${canonical}`;
-      const expected = crypto.createHmac('sha256', serverToken).update(payload).digest('hex');
-      if (expected !== signature) {
-        console.error('[internal-start] Invalid signature');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
-      }
-    }
-
-    // --- Parse body ---
-    const body = await request.json();
-    const { jobId, userId, domain, locale } = body || {};
-    if (!jobId || !userId || !domain) {
-      return NextResponse.json({ error: 'jobId, userId ve domain zorunludur' }, { status: 400 });
-    }
-
-    // Normalize URL (keep parity with your other route)
-    const url = String(domain).startsWith('http') ? String(domain) : `https://${String(domain)}`;
 
     // --- DB: connect & early status update ---
     await dbConnect();
