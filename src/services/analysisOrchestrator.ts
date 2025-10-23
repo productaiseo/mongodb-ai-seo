@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import 'server-only';
-import { scrapWithPuppeteer } from '@/services/puppeteerScraper';
+// import { scrapWithPuppeteer } from '@/services/puppeteerScraper';
+import { playwrightScraper } from '@/services/playwrightScraper';
 import { runPerformanceAnalysis } from '@/services/performanceAnalyzer';
 import { runArkheAnalysis } from '@/services/arkhe';
 import { runPrometheusAnalysis } from '@/services/prometheus';
@@ -122,7 +123,8 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'STARTED' }); } catch {}
     
     logger.info(`[Orchestrator] Starting Puppeteer scrape for ${url}`, 'orchestrateAnalysis');
-    const scrapedData = await scrapWithPuppeteer(url);
+    const scrapedData = await playwrightScraper(url);
+    // const scrapedData = await scrapWithPuppeteer(url);
     const { content: scrapedContent, html: scrapedHtml } = scrapedData;
     
     logger.info(`[Orchestrator] Scrape completed. Content length: ${scrapedContent.length}`, 'orchestrateAnalysis');
