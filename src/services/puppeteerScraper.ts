@@ -47,19 +47,22 @@ async function getBrowser() {
 
       // For chromium-min, you need to provide the binary location
       // These are hosted on a CDN
+/*       
       const executablePath = await chromium.executablePath(
         'https://github.com/Sparticuz/chromium/releases/download/v140.0.0/chromium-v140.0.0-pack.x64.tar'
       );
-      
-      logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
+*/
+      // logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
 
       // Launch browser with proper configuration
       logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
       const browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath,
-        headless: chromium.headless,
+        // executablePath,
+        executablePath: await chromium.executablePath(), // ← no remote fetch
+        // headless: chromium.headless,
+        headless: true,
         ignoreHTTPSErrors: true,
       });
 
@@ -136,17 +139,17 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
         'Accept-Language': 'en-US,en;q=0.9',
       });
 
-      const response = await page.goto(normalizedUrl, {
-        waitUntil: 'networkidle0',
-        timeout: 60_000,
-      });
+      // const response = await page.goto(normalizedUrl, { waitUntil: 'networkidle0', timeout: 60_000, });
+
+      const response = await page.goto(normalizedUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 15000 }).catch(() => {});
 
       if (!response || !response.ok()) {
         throw new AppError(
           ErrorType.SCRAPING_ERROR,
           `HTTP error! Status: ${response?.status()} for ${normalizedUrl}`,
           {
-            userFriendlyMessage: `Web sitesine ulaşılamadı (Hata Kodu: ${response?.status()}). Lütfen URL'yi kontrol edin.`,
+            userFriendlyMessage: `Could not reach the website (Error Code: ${response?.status()}). Please check the URL.`,
           }
         );
       }
@@ -155,7 +158,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
       const content = await page.evaluate(() => document.body.innerText || '');
 
       if (!content || content.trim().length < 100) {
-        throw new Error('Yetersiz içerik kazındı. Sayfa düzgün yüklenmemiş olabilir.');
+        throw new Error('Insufficient content scraped. The page may not have loaded properly.');
       }
 
       // Fetch robots.txt and llms.txt
@@ -216,7 +219,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
           `Alan adı çözümlenemedi: ${normalizedUrl}`,
           {
             contextData: { url: normalizedUrl, error: error.message },
-            userFriendlyMessage: "Belirtilen alan adı bulunamadı. Lütfen URL'yi kontrol edip tekrar deneyin.",
+            userFriendlyMessage: 'The specified domain name could not be found. Please check the URL and try again.',
           }
         );
       }
@@ -241,7 +244,7 @@ export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeR
     `Puppeteer ile sayfa taranırken ${MAX_RETRIES} denemenin ardından bir hata oluştu: ${normalizedUrl}`,
     {
       contextData: { url: normalizedUrl, error: lastError?.message },
-      userFriendlyMessage: 'Web sitesi taranırken bir sorunla karşılaşıldı. Lütfen URL\'yi kontrol edip tekrar deneyin.',
+      userFriendlyMessage: 'An issue occurred while scraping the website. Please check the URL and try again.',
     }
   );
 }
