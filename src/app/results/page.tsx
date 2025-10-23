@@ -2,7 +2,7 @@
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
 import Layout from '@/components/Layouts/Layout';
-import DynamicResults from '@/components/Pages/DynamicResults';
+import ResultsPage from '@/components/Pages/ResultsPage';
 
 
 // Force dynamic rendering - prevents caching
@@ -48,7 +48,7 @@ export default async function DynamicPage(
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Layout>
-        <DynamicResults
+        <ResultsPage
           // key={`${plainDomain}-${timestamp}`}
           // plainDomain={plainDomain}
         />
