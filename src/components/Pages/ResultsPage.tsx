@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
@@ -11,31 +11,27 @@ import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
 import { AnalysisJob } from '@/types/geo';
 
-/*
-interface Props {
-  plainDomain: string;
-}
-*/
 
-const ResultsPage = (
-  // { plainDomain }: Props
-) => {
+const ResultsPage = () => {
 
   const t = useTranslations("HomePage");
   const l = useTranslations("ResultsPage");
   const locale = useLocale();
   const router = useRouter();
-  // const { domain } = useParams();
   const searchParams = useSearchParams();
+  
+  // Get domain from query parameter
   const domain = searchParams.get('website');
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const retryCountRef = useRef(0);
   const maxRetries = 3;
+  const hasStartedAnalysis = useRef(false);
 
   // Build steps with localized labels
   const jobStatusSteps = useMemo(() => ([
@@ -49,16 +45,12 @@ const ResultsPage = (
     { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
   ]), [t]);
 
-  // const params = useParams<{ domain: string }>();
-  console.log('DomainResultsPage params:', domain);
-  const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
+  console.log('ResultsPage params:', domain);
+  const plainDomain = domain ? decodeURIComponent(domain) : '';
 
   // 1) PRE-CHECK: see if a report already exists
   useEffect(() => {
-    if (!plainDomain) {
-      setError('No website specified. Please provide a website parameter.');
-      return;
-    }
+    if (!plainDomain || isInitialized) return;
 
     const precheck = async () => {
       try {
@@ -76,6 +68,7 @@ const ResultsPage = (
           // no report; start fresh
           console.log('[precheck] No existing report found, starting new analysis');
           await startAnalysis();
+          setIsInitialized(true);
           return;
         }
 
@@ -90,6 +83,7 @@ const ResultsPage = (
           // redirect to the canonical report page
           console.log('[precheck] Found completed report, redirecting');
           router.replace(`/report/${encodeURIComponent(plainDomain)}`);
+          setIsInitialized(true);
           return;
         }
 
@@ -98,19 +92,29 @@ const ResultsPage = (
           console.log('[precheck] Found running job, resuming polling:', data.jobId);
           setJobId(data.jobId);
           setJobStatus(data.status);
+          setIsInitialized(true);
           return;
         }
 
         // Otherwise, start a new analysis
         console.log('[precheck] No valid job found, starting new analysis');
         await startAnalysis();
+        setIsInitialized(true);
       } catch (err) {
         console.error('[precheck] Error:', err);
         setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
+        setIsInitialized(true);
       }
     };
 
     const startAnalysis = async () => {
+      if (hasStartedAnalysis.current) {
+        console.log('[startAnalysis] Already started, skipping...');
+        return;
+      }
+      
+      hasStartedAnalysis.current = true;
+      
       try {
         console.log('[startAnalysis] Starting analysis for:', plainDomain);
         setJobStatus('PROCESSING_SCRAPE');
@@ -147,12 +151,18 @@ const ResultsPage = (
         setJobId(data.jobId);
       } catch (err) {
         console.error('[startAnalysis] Error:', err);
+        hasStartedAnalysis.current = false;
         throw err;
       }
     };
 
+    if (!plainDomain) {
+      setError('No website specified. Please provide a website parameter.');
+      return;
+    }
+
     precheck();
-  }, [plainDomain, locale, router]);
+  }, [plainDomain, locale, router, isInitialized]);
 
   // 2) Poll job status with retry logic
   useEffect(() => {
@@ -233,6 +243,19 @@ const ResultsPage = (
   const progress = jobStatus === 'COMPLETED'
     ? 100
     : Math.floor((jobStatusSteps.findIndex(s => s.status === jobStatus) / (jobStatusSteps.length - 1)) * 100) || 0;
+
+  if (!plainDomain) {
+    return (
+      <main className="container flex-1 mx-auto py-8">
+        <div className="text-red-400 bg-red-950/30 p-4 rounded-lg max-w-6xl mx-auto mt-8">
+          <div className="flex items-start">
+            <FiAlertCircle className="mt-1 mr-2 flex-shrink-0" />
+            <div>No website specified. Please provide a website parameter.</div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
       <main className="container flex-1 mx-auto py-8">
