@@ -35,9 +35,10 @@ async function getBrowser() {
     try {
       logger.info(`[puppeteer-scraper] Setting up production browser...`, 'puppeteer-scraper');
 
-      // chromium-min package is optimized for serverless and has the binaries properly bundled
-      const chromiumModule = await import('@sparticuz/chromium');
-      const puppeteerModule = await import('puppeteer-core');
+      const [chromiumModule, puppeteerModule] = await Promise.all([
+        import('@sparticuz/chromium'),
+        import('puppeteer-core')
+      ]);
 
       // Access the default exports correctly
       chromium = chromiumModule.default || chromiumModule;
@@ -45,25 +46,31 @@ async function getBrowser() {
 
       logger.info(`[puppeteer-scraper] Packages imported successfully`, 'puppeteer-scraper');
 
-      // For chromium-min, you need to provide the binary location
-      // These are hosted on a CDN
-/*       
-      const executablePath = await chromium.executablePath(
-        'https://github.com/Sparticuz/chromium/releases/download/v140.0.0/chromium-v140.0.0-pack.x64.tar'
-      );
-*/
-      // logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
+      // Get executable path from chromium
+      const executablePath = await chromium.executablePath();
+      logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
 
       // Launch browser with proper configuration
       logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
+      // Launch browser with proper configuration
       const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        // executablePath,
-        executablePath: await chromium.executablePath(), // Let Sparticuz resolve & unpack to /tmp automatically
-        // headless: chromium.headless,
-        headless: true,
-        ignoreHTTPSErrors: true,
+        headless: 'new',
+        executablePath,
+        args: [
+          ...chromium.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--memory-pressure-off',
+          '--max_old_space_size=4096'
+        ]
       });
 
       logger.info(`[puppeteer-scraper] Browser launched successfully`, 'puppeteer-scraper');
