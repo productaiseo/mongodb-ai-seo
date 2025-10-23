@@ -47,15 +47,25 @@ async function getBrowser() {
       logger.info(`[puppeteer-scraper] Packages imported successfully`, 'puppeteer-scraper');
 
       // Get executable path from chromium
-      const executablePath = await chromium.executablePath();
-      logger.info(`[puppeteer-scraper] Executable path: ${executablePath}`, 'puppeteer-scraper');
+      let executPath: string | undefined;
+      try {
+        executPath = await chromium.executablePath();
+      } catch (e) {
+        logger.warn('[puppeteer-scraper] executablePath failed; using remote pack fallback once');
+        const chromiumMin = (await import('@sparticuz/chromium-min')).default;
+        executPath = await chromiumMin.executablePath(
+          'https://github.com/Sparticuz/chromium/releases/download/v140.0.0/chromium-v140.0.0-pack.x64.tar'
+        );
+      }
+      logger.info(`[puppeteer-scraper] Executable path: ${executPath}`, 'puppeteer-scraper');
 
       // Launch browser with proper configuration
       logger.info(`[puppeteer-scraper] Launching browser...`, 'puppeteer-scraper');
       // Launch browser with proper configuration
       const browser = await puppeteer.launch({
-        headless: 'new',
-        executablePath,
+        headless: true,
+        executablePath: executPath,
+        defaultViewport: chromium.defaultViewport,
         args: [
           ...chromium.args,
           '--no-sandbox',
