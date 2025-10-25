@@ -181,10 +181,10 @@ export async function POST(request: NextRequest) {
 
     console.log('[analyze-domain] Locale:', locale);
 
-    const enqueueUrl = `${baseUrl}/api/internal/start-analysis`;
+    const enqueueUrl = `${baseUrl}/api/internal/enqueue-analysis`;
     const body = { 
-      jobId,
-      userId: 'public',
+      jobId, 
+      userId: 'public', 
       domain: hostname, // Send clean hostname to worker
       url: normalizedUrl, // Also send full URL if needed
       locale 
