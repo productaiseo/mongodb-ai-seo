@@ -23,7 +23,7 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
   const router = useRouter();
 
   const [jobId, setJobId] = useState<string | null>(null);
-const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
+  const [jobStatus, setJobStatus] = useState<string | null>('QUEUED');
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
 
@@ -99,9 +99,9 @@ const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
     const startAnalysis = async () => {
       try {
         console.log('[startAnalysis] Starting analysis for:', plainDomain);
-        setJobStatus('PROCESSING_SCRAPE');
+        setJobStatus('QUEUED');
         
-        const response = await fetch(`/api/internal/start-analysis`, {
+        const response = await fetch(`/api/analyze-domain`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
         console.log('[startAnalysis] Response:', data);
 
         if (!data.jobId) {
-          throw new Error('No jobId returned from start-analysis API');
+          throw new Error('No jobId returned from analyze-domain API');
         }
 
         console.log('[startAnalysis] Job created with ID:', data.jobId);
