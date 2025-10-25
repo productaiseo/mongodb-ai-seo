@@ -11,7 +11,7 @@ const Hero = () => {
   const t = useTranslations("HomePage");
 
   return (
-    <div className="container flex flex-col mx-auto px-4 md:px-0 items-center gap-12 mt-8 z-10">
+    <div className="container flex flex-col mx-auto items-center gap-12 mt-8 z-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
