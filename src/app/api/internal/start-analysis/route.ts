@@ -57,18 +57,13 @@ function cleanUndefined<T>(v: T): T {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    // ✅ Support both direct calls and calls from analyze-domain
-    const url = body.url || body.domain;
-    const locale = body.locale || 'en';
-    const existingJobId = body.jobId; // Optional: if called from analyze-domain
-    const userId = body.userId || 'public';
+    // Extract parameters from request body
+    const { url, locale } = await request.json();
 
     // Input validation
     if (!url || typeof url !== 'string') {
       return NextResponse.json(
-        { error: 'URL is required and must be a string' },
+        { error: 'URL gereklidir ve bir metin olmalidir.' },
         { 
           status: 400,
           headers: {
@@ -81,6 +76,7 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
+    // Input normalization
     const normalizedUrl = normalizeUrl(url);
     const hostname = extractHostname(url);
     
@@ -88,125 +84,47 @@ export async function POST(request: NextRequest) {
     console.log('[start-analysis] Normalized URL:', normalizedUrl);
     console.log('[start-analysis] Hostname:', hostname);
     console.log('[start-analysis] Locale:', locale);
-    console.log('[start-analysis] Existing jobId:', existingJobId || 'none');
 
-    let jobId: string;
-    let job: AnalysisJob;
+    const nowIso = new Date().toISOString();
+    const jobId = uuidv4();
 
-    // ✅ If jobId provided, update existing job
-    if (existingJobId) {
-      console.log('[start-analysis] Using existing jobId:', existingJobId);
-      
-      const existingJob = await AnalysisJobModel.findOne({ id: existingJobId }).lean<AnalysisJob>().exec();
-      
-      if (!existingJob) {
-        console.error('[start-analysis] Job not found:', existingJobId);
-        return NextResponse.json(
-          { error: 'Job not found' },
-          { 
-            status: 404,
-            headers: {
-              'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-              'Pragma': 'no-cache',
-            },
-          }
-        );
-      }
+    // Create job directly with PROCESSING_SCRAPE status
+    const newJob: AnalysisJob = {
+      id: jobId,
+      userId: 'public',
+      url: normalizedUrl,
+      urlHost: hostname,
+      locale: locale || 'en',
+      status: 'PROCESSING_SCRAPE', // Start directly at processing
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      finalGeoScore: null,
+    };
 
-      // Update to PROCESSING_SCRAPE
-      await AnalysisJobModel.updateOne(
-        { id: existingJobId },
-        { $set: { status: 'PROCESSING_SCRAPE', updatedAt: new Date().toISOString() } }
-      ).exec();
+    // Create the job in DB
+    const payload = cleanUndefined(newJob) as any;
+    await AnalysisJobModel.create(payload);
 
-      jobId = existingJobId;
-      job = {
-        ...existingJob,
-        status: 'PROCESSING_SCRAPE',
-        updatedAt: new Date().toISOString(),
-      };
-      
-      console.log('[start-analysis] Updated existing job:', jobId);
-    } 
-    // ✅ Otherwise, create new job
-    else {
-      // Check for existing job in last 24 hours to avoid duplicates
-      const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const recentJob = await AnalysisJobModel.findOne({
-        urlHost: hostname,
-        createdAt: { $gte: sinceIso }
-      })
-      .sort({ createdAt: -1 })
-      .lean<AnalysisJob>()
-      .exec();
+    console.log('[start-analysis] Created job:', jobId, 'for domain:', hostname);
 
-      if (recentJob && recentJob.status !== 'FAILED') {
-        console.log('[start-analysis] Found recent job:', recentJob.id, 'status:', recentJob.status);
-        
-        if (recentJob.status === 'COMPLETED') {
-          return NextResponse.json(
-            { jobId: recentJob.id, status: 'COMPLETED' },
-            {
-              status: 200,
-              headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                'Pragma': 'no-cache',
-              },
-            }
-          );
-        }
-        
-        // Job is in progress, return existing jobId
-        return NextResponse.json(
-          { jobId: recentJob.id, status: recentJob.status },
-          {
-            status: 202,
-            headers: {
-              'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-              'Pragma': 'no-cache',
-            },
-          }
-        );
-      }
-
-      const nowIso = new Date().toISOString();
-      jobId = uuidv4();
-
-      job = {
-        id: jobId,
-        userId,
-        url: normalizedUrl,
-        urlHost: hostname,
-        locale,
-        status: 'PROCESSING_SCRAPE',
-        createdAt: nowIso,
-        updatedAt: nowIso,
-        finalGeoScore: null,
-      };
-
-      const payload = cleanUndefined(job) as any;
-      await AnalysisJobModel.create(payload);
-
-      console.log('[start-analysis] Created new job:', jobId, 'for domain:', hostname);
-
-      // Verify write
-      try {
-        const check = await AnalysisJobModel.findOne({ id: jobId }).lean().exec();
-        if (!check) {
-          console.error('[start-analysis] Job write verification failed');
-        }
-      } catch (err) {
-        console.error('[start-analysis] Job verification error:', err);
-      }
+    // Best-effort verify
+    let wroteOk: boolean | undefined = undefined;
+    try {
+      const check = await AnalysisJobModel.findOne({ id: jobId }).lean().exec();
+      wroteOk = !!check;
+      console.log('[start-analysis] Job write verification:', wroteOk);
+    } catch (err) {
+      console.error('[start-analysis] Job verification failed:', err);
     }
 
     // Fire-and-forget: Start orchestration in background
-    orchestrateAnalysis(job).catch((error: any) => {
-      logger.error?.('orchestrateAnalysis failed (detached)', 'start-analysis', { 
+    orchestrateAnalysis(newJob).catch((error: any) => {
+      logger.error?.('orchestrateAnalysis failed (detached)', 'internal-start-analysis', { 
         jobId,
         error: error?.message || error 
       });
       
+      // Update job status to FAILED on error
       AnalysisJobModel.updateOne(
         { id: jobId },
         {
@@ -221,11 +139,12 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    // Return immediately with jobId
+    // Return immediately (fire-and-forget)
     return NextResponse.json(
       { 
         jobId, 
-        status: 'PROCESSING_SCRAPE'
+        wroteOk,
+        status: 'PROCESSING_SCRAPE' // Return the actual status
       },
       {
         status: 202, // Accepted
@@ -238,7 +157,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[start-analysis] Error in POST handler:', error);
-    logger.error?.('start-analysis internal API failed', 'start-analysis', { error });
+    logger.error?.('start-analysis internal API failed', 'internal-start-analysis', { error });
     
     return NextResponse.json(
       { error: 'Internal Server Error' },
