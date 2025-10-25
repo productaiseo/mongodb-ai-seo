@@ -8,6 +8,7 @@ import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 
 import ReportHeader from '@/components/Reports/ReportHeader';
 import ReportTabs from '@/components/Reports/ReportTabs';
+import Footer from '@/components/Footer';
 import { AnalysisJob } from '@/types/geo';
 
 interface Props {
