@@ -36,7 +36,7 @@ async function getBrowser() {
       logger.info(`[puppeteer-scraper] Setting up production browser...`, 'puppeteer-scraper');
 
       // chromium-min package is optimized for serverless and has the binaries properly bundled
-      const chromiumModule = await import('@sparticuz/chromium');
+      const chromiumModule = await import('@sparticuz/chromium-min');
       const puppeteerModule = await import('puppeteer-core');
 
       // Access the default exports correctly
@@ -60,7 +60,7 @@ async function getBrowser() {
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
         // executablePath,
-        executablePath: await chromium.executablePath(), // Let Sparticuz resolve & unpack to /tmp automatically
+        executablePath: await chromium.executablePath(), // ← no remote fetch
         // headless: chromium.headless,
         headless: true,
         ignoreHTTPSErrors: true,
