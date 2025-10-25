@@ -7,7 +7,6 @@ import { PlaywrightScrapeResult } from '@/utils/types/analysis';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
-const OVERALL_TIMEOUT_MS = 45000; // 45 seconds max per attempt
 
 type Browser = import('playwright-core').Browser;
 
@@ -35,19 +34,10 @@ async function getBrowser(): Promise<Browser> {
     }
   );
 
-  if (g.__PW_BROWSER__.browser) {
-    try {
-      // Test if browser is still alive
-      const contexts = g.__PW_BROWSER__.browser.contexts();
-      logger.info(`[playwright-scraper] Reusing cached browser (${contexts.length} contexts)`, 'playwright-scraper');
-      return g.__PW_BROWSER__.browser!;
-    } catch (e) {
-      logger.warn(`[playwright-scraper] Cached browser is dead, creating new one`, 'playwright-scraper');
-      g.__PW_BROWSER__.browser = null;
-    }
-  }
+  if (g.__PW_BROWSER__.browser) return g.__PW_BROWSER__.browser!;
 
   if (isProduction) {
+    // ---- Production (Vercel) → playwright-core + @sparticuz/chromium ----
     const [{ chromium: chromiumLauncher }, chromiumModule] = await Promise.all([
       import('playwright-core').then(m => ({ chromium: m.chromium })),
       import('@sparticuz/chromium')
@@ -71,7 +61,8 @@ async function getBrowser(): Promise<Browser> {
     g.__PW_BROWSER__.browser = browser;
     return browser;
   } else {
-    const { chromium } = await import('playwright');
+    // ---- Development → full playwright (has browsers installed locally) ----
+    const { chromium } = await import('playwright'); // dev dependency
     pwChromium = chromium;
 
     const browser = await pwChromium.launch({
@@ -83,35 +74,22 @@ async function getBrowser(): Promise<Browser> {
   }
 }
 
-/**
- * Scrape with overall timeout protection
- */
-async function scrapeWithTimeout(url: string, timeoutMs: number): Promise<PlaywrightScrapeResult> {
-  return new Promise(async (resolve, reject) => {
+export async function playwrightScraper(url: string): Promise<PlaywrightScrapeResult> {
+  const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     let browser: Browser | null = null;
     let context: import('playwright-core').BrowserContext | null = null;
     let page: import('playwright-core').Page | null = null;
-    let timeoutHandle: NodeJS.Timeout | null = null;
-    let isTimedOut = false;
-
-    // Overall timeout
-    timeoutHandle = setTimeout(() => {
-      isTimedOut = true;
-      const error = new Error(`Scraping timed out after ${timeoutMs}ms`);
-      logger.error(`[playwright-scraper] Timeout reached for ${url}`, 'playwright-scraper');
-      
-      // Force cleanup
-      Promise.all([
-        page?.close().catch(() => {}),
-        context?.close().catch(() => {}),
-      ]).finally(() => {
-        reject(error);
-      });
-    }, timeoutMs);
 
     try {
+      logger.info(`[playwright-scraper] Attempt ${attempt}/${MAX_RETRIES} - ${normalizedUrl}`);
+
       browser = await getBrowser();
 
+      // Create a fresh context each attempt (userAgent/headers/viewport here)
       context = await browser.newContext({
         viewport: { width: 1920, height: 1080 },
         userAgent:
@@ -124,25 +102,19 @@ async function scrapeWithTimeout(url: string, timeoutMs: number): Promise<Playwr
 
       page = await context.newPage();
 
-      // Shorter individual timeouts since we have overall timeout
-      const response = await page.goto(url, {
+      // Navigation strategy: DOM ready + bounded network idle
+      const response = await page.goto(normalizedUrl, {
         waitUntil: 'domcontentloaded',
-        timeout: 30_000, // Reduced from 60s
+        timeout: 60_000,
       });
 
-      if (isTimedOut) return; // Already cleaned up
-
-      // Shorter network idle
-      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {
-        logger.warn(`[playwright-scraper] Network idle timeout (non-fatal)`, 'playwright-scraper');
-      });
-
-      if (isTimedOut) return;
+      // Bounded idle (avoid permanent hangs on long-polling sites)
+      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 
       if (!response || !response.ok()) {
         throw new AppError(
           ErrorType.SCRAPING_ERROR,
-          `HTTP error! Status: ${response?.status()} for ${url}`,
+          `HTTP error! Status: ${response?.status()} for ${normalizedUrl}`,
           {
             userFriendlyMessage: `Could not reach the website (Error Code: ${response?.status()}). Please check the URL.`,
           }
@@ -156,95 +128,48 @@ async function scrapeWithTimeout(url: string, timeoutMs: number): Promise<Playwr
         throw new Error('Insufficient content scraped. The page may not have loaded properly.');
       }
 
-      // robots.txt + llms.txt (with shorter timeout)
-      const [robotsTxt, llmsTxt] = await Promise.allSettled([
-        page.evaluate(async (baseUrl: string) => {
+      // robots.txt + llms.txt (HTTP from inside the page to honor cookies/proxy if any)
+      const [robotsTxt, llmsTxt] = await Promise.all([
+        (async () => {
           try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(new URL('/robots.txt', baseUrl).toString(), { 
-              signal: controller.signal 
-            });
-            clearTimeout(timeoutId);
-            return res.ok ? await res.text() : undefined;
+            return await page.evaluate(async (baseUrl: string) => {
+              try {
+                const res = await fetch(new URL('/robots.txt', baseUrl).toString());
+                return res.ok ? await res.text() : undefined;
+              } catch {
+                return undefined;
+              }
+            }, normalizedUrl);
           } catch {
+            logger.warn(`[playwright-scraper] robots.txt not reachable`);
             return undefined;
           }
-        }, url),
-        page.evaluate(async (baseUrl: string) => {
+        })(),
+        (async () => {
           try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(new URL('/llms.txt', baseUrl).toString(), { 
-              signal: controller.signal 
-            });
-            clearTimeout(timeoutId);
-            return res.ok ? await res.text() : undefined;
+            return await page.evaluate(async (baseUrl: string) => {
+              try {
+                const res = await fetch(new URL('/llms.txt', baseUrl).toString());
+                return res.ok ? await res.text() : undefined;
+              } catch {
+                return undefined;
+              }
+            }, normalizedUrl);
           } catch {
+            logger.warn(`[playwright-scraper] llms.txt not reachable`);
             return undefined;
           }
-        }, url),
-      ]).then(results => [
-        results[0].status === 'fulfilled' ? results[0].value : undefined,
-        results[1].status === 'fulfilled' ? results[1].value : undefined,
+        })(),
       ]);
 
-      if (isTimedOut) return;
+      // Shallow-clone window.performance (structured-clone safe)
+      const performanceMetrics = await page.evaluate(
+        () => JSON.parse(JSON.stringify(window.performance))
+      );
 
-      // Performance metrics
-      let performanceMetrics;
-      try {
-        performanceMetrics = await page.evaluate(
-          () => JSON.parse(JSON.stringify(window.performance))
-        );
-      } catch (e) {
-        logger.warn(`[playwright-scraper] Could not get performance metrics`, 'playwright-scraper');
-        performanceMetrics = {};
-      }
+      logger.info(`[playwright-scraper] Success - ${normalizedUrl}`);
 
-      logger.info(`[playwright-scraper] Success - ${url}`, 'playwright-scraper');
-
-      // Clear timeout and resolve
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      resolve({ html, content, robotsTxt, llmsTxt, performanceMetrics });
-
-    } catch (error: any) {
-      if (isTimedOut) return; // Already handled by timeout
-      
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      reject(error);
-    } finally {
-      // Cleanup
-      try {
-        await page?.close().catch(() => {});
-        await context?.close().catch(() => {});
-      } catch (closeErr) {
-        logger.error(`[playwright-scraper] Error closing page/context`, 'playwright-scraper', { error: closeErr });
-      }
-    }
-  });
-}
-
-export async function playwrightScraper(url: string): Promise<PlaywrightScrapeResult> {
-  const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-
-  let lastError: any;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      logger.info(`[playwright-scraper] Attempt ${attempt}/${MAX_RETRIES} - ${normalizedUrl}`, 'playwright-scraper');
-
-      const result = await scrapeWithTimeout(normalizedUrl, OVERALL_TIMEOUT_MS);
-      return result;
-
+      return { html, content, robotsTxt, llmsTxt, performanceMetrics };
     } catch (error: any) {
       lastError = error;
       logger.warn(
@@ -256,7 +181,7 @@ export async function playwrightScraper(url: string): Promise<PlaywrightScrapeRe
       if (error?.message?.includes('net::ERR_NAME_NOT_RESOLVED')) {
         throw new AppError(
           ErrorType.DNS_RESOLUTION_ERROR,
-          `Domain could not be resolved: ${normalizedUrl}`,
+          `Alan adı çözümlenemedi: ${normalizedUrl}`,
           {
             contextData: { url: normalizedUrl, error: error.message },
             userFriendlyMessage: 'The specified domain name could not be found. Please check the URL and try again.',
@@ -264,22 +189,23 @@ export async function playwrightScraper(url: string): Promise<PlaywrightScrapeRe
         );
       }
 
-      // Don't retry on timeout - it's likely a bad site
-      if (error?.message?.includes('timed out')) {
-        logger.error(`[playwright-scraper] Timeout after ${OVERALL_TIMEOUT_MS}ms, not retrying`, 'playwright-scraper');
-        break;
-      }
-
       if (attempt < MAX_RETRIES) {
-        logger.info(`[playwright-scraper] Waiting ${RETRY_DELAY_MS}ms before retry`, 'playwright-scraper');
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      }
+    } finally {
+      // Always close page + context; keep the browser cached for warm invocations
+      try {
+        await page?.close().catch(() => {});
+        await context?.close().catch(() => {});
+      } catch (closeErr) {
+        logger.error(`[playwright-scraper] Error closing page/context`, 'playwright-scraper', { error: closeErr });
       }
     }
   }
 
   throw new AppError(
     ErrorType.SCRAPING_ERROR,
-    `Failed to scrape page after ${MAX_RETRIES} attempts: ${normalizedUrl}`,
+    `Playwright ile sayfa taranırken ${MAX_RETRIES} denemenin ardından bir hata oluştu: ${normalizedUrl}`,
     {
       contextData: { url: normalizedUrl, error: lastError?.message },
       userFriendlyMessage: 'An issue occurred while scraping the website. Please check the URL and try again.',
