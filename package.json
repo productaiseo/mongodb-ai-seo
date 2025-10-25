@@ -21,7 +21,7 @@
     "lucide-react": "^0.544.0",
     "mongoose": "^8.18.2",
     "next": "16.0.0",
-    "next-intl": "^4.4.0",
+    "next-intl": "^4.3.11",
     "openai": "^5.23.1",
     "playwright-core": "^1.55.1",
     "puppeteer": "^24.23.0",
@@ -47,9 +47,6 @@
   },
   "overrides": {
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
-    "next-intl": {
-      "next": "^16.0.0"
-    }
+    "@types/react-dom": "19.2.2"
   }
 }
