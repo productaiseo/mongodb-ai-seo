@@ -44,6 +44,7 @@ async function updateJob(job: AnalysisJob, updates: Partial<AnalysisJob>): Promi
     { upsert: true }
   ).exec();
 
+  // Log status changes for debugging
   if (updates.status) {
     logger.info(`[Orchestrator] Job ${job.id} status updated to: ${updates.status}`, 'updateJob');
   }
@@ -68,8 +69,13 @@ async function appendJobEvent(jobId: string, event: { step: string; status: 'STA
 }
 
 /**
- * RESILIENT orchestration: Continue even if steps fail
- * Strategy: Store error reports for failed steps, complete what we can
+ * OPTIMIZED orchestration: Run independent analyses in parallel
+ * Dependencies:
+ * 1. Scraping must complete first (everyone depends on it)
+ * 2. Arkhe + Performance can run in parallel (both only need scraped data)
+ * 3. Prometheus depends on Arkhe completion
+ * 4. Lir depends on Prometheus completion
+ * 5. Generative Performance depends on Arkhe completion
  */
 export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
   const { id, url, locale } = job;
@@ -87,16 +93,12 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     timestamp: new Date().toISOString()
   });
 
-  logger.info(`[Orchestrator] Analysis initiated: ${id} - ${url}`, 'orchestrateAnalysis');
+  logger.info(`[Orchestrator] The analysis process has been initiated: ${id} - ${url}`, 'orchestrateAnalysis');
 
+  // Add heartbeat logging to detect where it hangs
   const heartbeat = setInterval(() => {
-    logger.info(`[Orchestrator] Heartbeat for job ${id}`, 'orchestrateAnalysis');
-  }, 10000);
-
-  // Track which steps completed successfully
-  let hasScrapedData = false;
-  let hasArkheData = false;
-  let hasPrometheusData = false;
+    logger.info(`[Orchestrator] Heartbeat for job ${id} - still running...`, 'orchestrateAnalysis');
+  }, 10000); // Reduced frequency to 10s
 
   try {
     await dbConnect();
@@ -106,45 +108,33 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     logger.info(`[Orchestrator] Existing job status:`, 'orchestrateAnalysis', { status: existing?.status });
 
     if (existing?.status === 'COMPLETED' || existing?.status === 'FAILED') {
-      logger.info(`[Orchestrator] Job ${id} already ${existing.status}; skipping.`, 'orchestrateAnalysis');
+      logger.info(`[Orchestrator] Job ${id} is already ${existing.status}; skipping.`, 'orchestrateAnalysis');
       return;
     }
 
+    // REMOVED: job = await updateJob(job, { status: 'PROCESSING' });
+    // Start directly with PROCESSING_SCRAPE instead
     try { await appendJobEvent(id, { step: 'INIT', status: 'COMPLETED' }); } catch {}
 
-
-    // PHASE 1: SCRAPE (Critical - but continue if fails)
+    // ========================================
+    // PHASE 1: SCRAPE (Must complete first)
+    // ========================================
     job = await updateJob(job, { status: 'PROCESSING_SCRAPE' });
     try { await appendJobEvent(id, { step: 'SCRAPE', status: 'STARTED' }); } catch {}
     
-    let scrapedContent = '';
-    let scrapedHtml = '';
-    let scrapedData: any = null;
+    logger.info(`[Orchestrator] Starting Puppeteer scrape for ${url}`, 'orchestrateAnalysis');
+    const scrapedData = await playwrightScraper(url);
+    // const scrapedData = await puppeteerScraper(url);
+    const { content: scrapedContent, html: scrapedHtml } = scrapedData;
+    
+    logger.info(`[Orchestrator] Scrape completed. Content length: ${scrapedContent.length}`, 'orchestrateAnalysis');
+    job = await updateJob(job, { scrapedContent, scrapedHtml });
+    try { await appendJobEvent(id, { step: 'SCRAPE', status: 'COMPLETED' }); } catch {}
 
-    try {
-      logger.info(`[Orchestrator] Starting Playwright scrape for ${url}`, 'orchestrateAnalysis');
-      scrapedData = await playwrightScraper(url);
-      scrapedContent = scrapedData.content || '';
-      scrapedHtml = scrapedData.html || '';
-      
-      logger.info(`[Orchestrator] Scrape completed. Content length: ${scrapedContent.length}`, 'orchestrateAnalysis');
-      job = await updateJob(job, { scrapedContent, scrapedHtml });
-      try { await appendJobEvent(id, { step: 'SCRAPE', status: 'COMPLETED' }); } catch {}
-      hasScrapedData = true;
-    } catch (e: any) {
-      logger.error(`[Orchestrator] Scraping failed, continuing with empty data`, 'orchestrateAnalysis', { error: e.message });
-      job = await updateJob(job, { 
-        scrapedContent: '',
-        scrapedHtml: '',
-        scrapeError: e?.message || 'Scraping failed'
-      } as any);
-      try { await appendJobEvent(id, { step: 'SCRAPE', status: 'FAILED', meta: { message: e?.message } }); } catch {}
-      // Continue anyway - some analyses might work with URL alone
-    }
-
-
-    // PHASE 2: PARALLEL - Arkhe + Performance
-    logger.info(`[Orchestrator] Starting parallel: Arkhe + Performance`, 'orchestrateAnalysis');
+    // ========================================
+    // PHASE 2: PARALLEL - Arkhe + Performance (both independent)
+    // ========================================
+    logger.info(`[Orchestrator] Starting parallel execution: Arkhe + Performance`, 'orchestrateAnalysis');
     
     const [arkheResult, performanceResult] = await Promise.allSettled([
       // ARKHE
@@ -153,23 +143,19 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
         try { await appendJobEvent(id, { step: 'ARKHE', status: 'STARTED' }); } catch {}
         
         try {
-          if (!hasScrapedData) {
-            throw new Error('No scraped data available');
-          }
-          
-          logger.info(`[Orchestrator] Starting Arkhe analysis`, 'orchestrateAnalysis');
+          logger.info(`[Orchestrator] Starting Arkhe analysis (parallel)`, 'orchestrateAnalysis');
           const arkheAnalysisResult = await runArkheAnalysis(job, scrapedData, locale);
           
           if ((arkheAnalysisResult as any)?.error) throw new Error((arkheAnalysisResult as any).error);
           job = await updateJob(job, { arkheReport: arkheAnalysisResult as any });
           try { await appendJobEvent(id, { step: 'ARKHE', status: 'COMPLETED' }); } catch {}
-          logger.info(`[Orchestrator] Arkhe completed`, 'orchestrateAnalysis');
+          logger.info(`[Orchestrator] Arkhe analysis completed`, 'orchestrateAnalysis');
           return arkheAnalysisResult;
         } catch (e: any) {
-          logger.warn(`[Orchestrator] Arkhe failed: ${e.message}`, 'orchestrateAnalysis');
-          const errorReport = { error: e?.message || 'Arkhe failed', failed: true };
+          logger.warn(`[Orchestrator] Arkhe analysis failed, continuing...`, 'orchestrateAnalysis', { error: e.message });
+          const errorReport = { error: e?.message || 'Arkhe failed' };
           job = await updateJob(job, { arkheReport: errorReport as any });
-          try { await appendJobEvent(id, { step: 'ARKHE', status: 'FAILED', meta: { message: e?.message } }); } catch {}
+          try { await appendJobEvent(id, { step: 'ARKHE', status: 'FAILED', meta: { message: e?.message } } as any); } catch {}
           throw e;
         }
       })(),
@@ -180,30 +166,34 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
         try { await appendJobEvent(id, { step: 'PSI', status: 'STARTED' }); } catch {}
         
         try {
-          logger.info(`[Orchestrator] Starting Performance analysis`, 'orchestrateAnalysis');
+          logger.info(`[Orchestrator] Starting Performance analysis (parallel)`, 'orchestrateAnalysis');
           const performanceResult = await runPerformanceAnalysis(url);
           job = await updateJob(job, { performanceReport: performanceResult } as any);
           try { await appendJobEvent(id, { step: 'PSI', status: 'COMPLETED' }); } catch {}
-          logger.info(`[Orchestrator] Performance completed`, 'orchestrateAnalysis');
+          logger.info(`[Orchestrator] Performance analysis completed`, 'orchestrateAnalysis');
           return performanceResult;
         } catch (e: any) {
-          logger.warn(`[Orchestrator] PSI failed: ${e.message}`, 'orchestrateAnalysis');
-          const errorReport = { error: e?.message || 'PSI failed', failed: true };
+          logger.warn(`[Orchestrator] PSI failed, continuing...`, 'orchestrateAnalysis', { error: e.message });
+          const errorReport = { error: e?.message || 'PSI failed' };
           job = await updateJob(job, { performanceReport: errorReport as any });
-          try { await appendJobEvent(id, { step: 'PSI', status: 'FAILED', meta: { message: e?.message } }); } catch {}
+          try { await appendJobEvent(id, { step: 'PSI', status: 'FAILED', meta: { message: e?.message } } as any); } catch {}
           throw e;
         }
       })()
     ]);
 
-    hasArkheData = arkheResult.status === 'fulfilled';
-    logger.info(`[Orchestrator] Phase 2 done - Arkhe: ${arkheResult.status}, Performance: ${performanceResult.status}`, 'orchestrateAnalysis');
+    // Check if Arkhe succeeded (required for next steps)
+    if (arkheResult.status === 'rejected') {
+      logger.error(`[Orchestrator] Arkhe failed, cannot proceed with Prometheus and Generative Performance`, 'orchestrateAnalysis');
+    }
 
+    logger.info(`[Orchestrator] Phase 2 completed - Arkhe: ${arkheResult.status}, Performance: ${performanceResult.status}`, 'orchestrateAnalysis');
 
-    // PHASE 3: PARALLEL - Prometheus + Generative Performance
-    // (Only if Arkhe succeeded)
-    if (hasArkheData) {
-      logger.info(`[Orchestrator] Starting parallel: Prometheus + GenPerf`, 'orchestrateAnalysis');
+    // ========================================
+    // PHASE 3: PARALLEL - Prometheus + Generative Performance (both depend on Arkhe)
+    // ========================================
+    if (arkheResult.status === 'fulfilled') {
+      logger.info(`[Orchestrator] Starting parallel execution: Prometheus + Generative Performance`, 'orchestrateAnalysis');
       
       const [prometheusResult, genPerfResult] = await Promise.allSettled([
         // PROMETHEUS
@@ -211,20 +201,12 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
           job = await updateJob(job, { status: 'PROCESSING_PROMETHEUS' });
           try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'STARTED' }); } catch {}
           
-          try {
-            logger.info(`[Orchestrator] Starting Prometheus analysis`, 'orchestrateAnalysis');
-            const promReport = await runPrometheusAnalysis(job, locale);
-            job = await updateJob(job, { prometheusReport: promReport });
-            try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'COMPLETED' }); } catch {}
-            logger.info(`[Orchestrator] Prometheus completed`, 'orchestrateAnalysis');
-            return promReport;
-          } catch (e: any) {
-            logger.warn(`[Orchestrator] Prometheus failed: ${e.message}`, 'orchestrateAnalysis');
-            const errorReport = { error: e?.message || 'Prometheus failed', failed: true };
-            job = await updateJob(job, { prometheusReport: errorReport as any });
-            try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'FAILED', meta: { message: e?.message } }); } catch {}
-            throw e;
-          }
+          logger.info(`[Orchestrator] Starting Prometheus analysis (parallel)`, 'orchestrateAnalysis');
+          const promReport = await runPrometheusAnalysis(job, locale);
+          job = await updateJob(job, { prometheusReport: promReport });
+          try { await appendJobEvent(id, { step: 'PROMETHEUS', status: 'COMPLETED' }); } catch {}
+          logger.info(`[Orchestrator] Prometheus analysis completed`, 'orchestrateAnalysis');
+          return promReport;
         })(),
         
         // GENERATIVE PERFORMANCE
@@ -232,73 +214,55 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
           job = await updateJob(job, { status: 'PROCESSING_GENERATIVE_PERFORMANCE' });
           try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'STARTED' }); } catch {}
           
-          try {
-            logger.info(`[Orchestrator] Starting GenPerf analysis`, 'orchestrateAnalysis');
-            const targetBrand = job.arkheReport?.businessModel?.brandName || new URL(job.url).hostname;
-            const genPerfReport = await runGenerativePerformanceAnalysis(job, targetBrand);
-            job = await updateJob(job, { generativePerformanceReport: genPerfReport });
-            try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'COMPLETED' }); } catch {}
-            logger.info(`[Orchestrator] GenPerf completed`, 'orchestrateAnalysis');
-            return genPerfReport;
-          } catch (e: any) {
-            logger.warn(`[Orchestrator] GenPerf failed: ${e.message}`, 'orchestrateAnalysis');
-            const errorReport = { error: e?.message || 'GenPerf failed', failed: true };
-            job = await updateJob(job, { generativePerformanceReport: errorReport as any });
-            try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'FAILED', meta: { message: e?.message } }); } catch {}
-            throw e;
-          }
+          logger.info(`[Orchestrator] Starting Generative Performance analysis (parallel)`, 'orchestrateAnalysis');
+          const targetBrand = job.arkheReport?.businessModel?.brandName || new URL(job.url).hostname;
+          const genPerfReport = await runGenerativePerformanceAnalysis(job, targetBrand);
+          job = await updateJob(job, { generativePerformanceReport: genPerfReport });
+          try { await appendJobEvent(id, { step: 'GEN_PERF', status: 'COMPLETED' }); } catch {}
+          logger.info(`[Orchestrator] Generative Performance analysis completed`, 'orchestrateAnalysis');
+          return genPerfReport;
         })()
       ]);
 
-      hasPrometheusData = prometheusResult.status === 'fulfilled';
-      logger.info(`[Orchestrator] Phase 3 done - Prometheus: ${prometheusResult.status}, GenPerf: ${genPerfResult.status}`, 'orchestrateAnalysis');
+      logger.info(`[Orchestrator] Phase 3 completed - Prometheus: ${prometheusResult.status}, GenPerf: ${genPerfResult.status}`, 'orchestrateAnalysis');
 
-
-      // PHASE 4: LIR (Only if Prometheus succeeded)
-      if (hasPrometheusData) {
+      // ========================================
+      // PHASE 4: LIR (depends on Prometheus)
+      // ========================================
+      if (prometheusResult.status === 'fulfilled') {
         job = await updateJob(job, { status: 'PROCESSING_LIR' });
         try { await appendJobEvent(id, { step: 'LIR', status: 'STARTED' }); } catch {}
         
-        try {
-          logger.info(`[Orchestrator] Starting Lir analysis`, 'orchestrateAnalysis');
-          const prometheusReport = (prometheusResult as PromiseFulfilledResult<any>).value;
-          const delfiAgenda = await runLirAnalysis(prometheusReport, locale);
-          job = await updateJob(job, { delfiAgenda });
-          try { await appendJobEvent(id, { step: 'LIR', status: 'COMPLETED' }); } catch {}
-          logger.info(`[Orchestrator] Lir completed`, 'orchestrateAnalysis');
-        } catch (e: any) {
-          logger.warn(`[Orchestrator] Lir failed: ${e.message}`, 'orchestrateAnalysis');
-          const errorReport = { error: e?.message || 'Lir failed', failed: true };
-          job = await updateJob(job, { delfiAgenda: errorReport as any });
-          try { await appendJobEvent(id, { step: 'LIR', status: 'FAILED', meta: { message: e?.message } }); } catch {}
+        logger.info(`[Orchestrator] Starting Lir analysis`, 'orchestrateAnalysis');
+        const prometheusReport = prometheusResult.value;
+        const delfiAgenda = await runLirAnalysis(prometheusReport, locale);
+        job = await updateJob(job, { delfiAgenda });
+        try { await appendJobEvent(id, { step: 'LIR', status: 'COMPLETED' }); } catch {}
+        logger.info(`[Orchestrator] Lir analysis completed`, 'orchestrateAnalysis');
+
+        // ========================================
+        // PHASE 5: Complete
+        // ========================================
+        const finalGeoScore = (prometheusReport as any)?.overallGeoScore;
+        job = await updateJob(job, { status: 'COMPLETED', finalGeoScore });
+
+        if (job.queryId) {
+          await saveReport(job.queryId, job);
+          await updateQueryStatus(job.queryId, 'COMPLETED');
         }
 
-        // Get final GEO score
-        const prometheusReport = (prometheusResult as PromiseFulfilledResult<any>).value;
-        const finalGeoScore = (prometheusReport as any)?.overallGeoScore || null;
-        job = await updateJob(job, { finalGeoScore });
+        logger.info(`[Orchestrator] Analysis process completed successfully: ${id}`, 'orchestrateAnalysis');
       } else {
-        logger.warn(`[Orchestrator] Skipping Lir (Prometheus failed)`, 'orchestrateAnalysis');
+        logger.error(`[Orchestrator] Prometheus failed, skipping Lir analysis`, 'orchestrateAnalysis');
+        throw new Error('Prometheus analysis failed');
       }
     } else {
-      logger.warn(`[Orchestrator] Skipping Prometheus, GenPerf, Lir (Arkhe failed)`, 'orchestrateAnalysis');
+      logger.error(`[Orchestrator] Arkhe analysis failed, cannot proceed`, 'orchestrateAnalysis');
+      throw new Error('Arkhe analysis failed');
     }
-
-
-    // COMPLETION: Mark as completed even if some steps failed
-    job = await updateJob(job, { status: 'COMPLETED' });
-
-    if (job.queryId) {
-      await saveReport(job.queryId, job);
-      await updateQueryStatus(job.queryId, 'COMPLETED');
-    }
-
-    logger.info(`[Orchestrator] Analysis completed: ${id}`, 'orchestrateAnalysis');
-    logger.info(`[Orchestrator] Summary - Scraped: ${hasScrapedData}, Arkhe: ${hasArkheData}, Prometheus: ${hasPrometheusData}`, 'orchestrateAnalysis');
 
   } catch (error) {
-    // Only fail if something catastrophic happened (DB error, etc.)
-    logger.error(`[Orchestrator] Critical error: ${id}`, 'orchestrateAnalysis', { error });
+    logger.error(`[Orchestrator] Analysis process error: ${id}`, 'orchestrateAnalysis', { error });
     try {
       await updateJob(job, {
         status: 'FAILED',
@@ -310,6 +274,8 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     } catch (writeErr) {
       logger.error('Failed to persist FAILED status', 'orchestrateAnalysis', { error: (writeErr as Error)?.message });
     }
+
+    if (error instanceof AppError) throw error;
 
     throw new AppError(
       ErrorType.ANALYSIS_FAILED,
