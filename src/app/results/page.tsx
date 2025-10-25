@@ -46,16 +46,13 @@ export default async function DynamicPage(
   // const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   return (
-    <Layout>
-        <Suspense fallback={
-          <div className="container flex-1 mx-auto py-8">
-            <div className="max-w-3xl mx-auto my-12 text-center">
-              <div className="animate-pulse">Loading analysis...</div>
-            </div>
-          </div>
-        }>
-        <ResultsPage />
-      </Suspense>
-    </Layout>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Layout>
+        <ResultsPage
+          // key={`${plainDomain}-${timestamp}`}
+          // plainDomain={plainDomain}
+        />
+      </Layout>
+    </Suspense>
   );
 }
