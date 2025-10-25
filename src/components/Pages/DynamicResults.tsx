@@ -125,6 +125,12 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
         const data = await response.json();
         console.log('[startAnalysis] Response:', data);
 
+        if (data.mockData) {
+          localStorage.setItem('currentAnalysisData', JSON.stringify(data.mockData));
+          router.replace(`/ai-report/${encodeURIComponent(plainDomain)}`);
+          return;
+        }
+
         if (!data.jobId) {
           throw new Error('No jobId returned from analyze-domain API');
         }

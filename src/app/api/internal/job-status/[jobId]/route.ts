@@ -1,15 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-
-import type { AnalysisJob } from '@/types/geo';
-import dbConnect from '@/lib/dbConnect';
-import { AnalysisJobModel } from '@/models/AnalysisJob';
-
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+import type { AnalysisJob } from '@/types/geo';
+import dbConnect from '@/lib/dbConnect';
+import { AnalysisJobModel } from '@/models/AnalysisJob';
 
 export async function generateStaticParams() {
   return [];
