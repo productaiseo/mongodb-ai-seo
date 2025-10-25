@@ -18,7 +18,7 @@ import { JobEventModel } from '@/models/JobEvent';
 
 import { updateQueryStatus, saveReport } from '@/lib/database';
 
-/** Utility: remove undefined recursively so we don't write undefineds into Mongo */
+/** Utility: remove undefined recursively */
 function cleanUndefined<T>(v: T): T {
   if (Array.isArray(v)) return v.map(cleanUndefined).filter(x => x !== undefined) as any;
   if (v && typeof v === 'object') {
@@ -32,7 +32,7 @@ function cleanUndefined<T>(v: T): T {
   return v;
 }
 
-/** Persist job updates in Mongo, return the merged in-memory job */
+/** Persist job updates in Mongo */
 async function updateJob(job: AnalysisJob, updates: Partial<AnalysisJob>): Promise<AnalysisJob> {
   await dbConnect();
   const updatesWithTimestamp = { ...updates, updatedAt: new Date().toISOString() };
@@ -51,7 +51,7 @@ async function updateJob(job: AnalysisJob, updates: Partial<AnalysisJob>): Promi
   return { ...job, ...updatesWithTimestamp };
 }
 
-/** Optional: append a small event document for progress tracking (Mongo version) */
+/** Append job event for tracking */
 async function appendJobEvent(jobId: string, event: { step: string; status: 'STARTED' | 'COMPLETED' | 'FAILED'; meta?: any }) {
   try {
     await dbConnect();
@@ -102,13 +102,8 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
     await dbConnect();
     logger.info(`[Orchestrator] DB connected`, 'orchestrateAnalysis');
 
-    const existing = await AnalysisJobModel.findOne({ id }).lean();
-    logger.info(`[Orchestrator] Existing job status:`, 'orchestrateAnalysis', { status: existing?.status });
-
-    if (existing?.status === 'COMPLETED' || existing?.status === 'FAILED') {
-      logger.info(`[Orchestrator] Job ${id} already ${existing.status}; skipping.`, 'orchestrateAnalysis');
-      return;
-    }
+    // If this orchestrator is called, we know the job needs processing
+    logger.info(`[Orchestrator] Starting analysis for job ${id}`, 'orchestrateAnalysis');
 
     try { await appendJobEvent(id, { step: 'INIT', status: 'COMPLETED' }); } catch {}
 
