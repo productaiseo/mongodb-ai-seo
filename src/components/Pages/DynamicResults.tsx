@@ -9,6 +9,7 @@ import { FiAlertCircle, FiDownload } from 'react-icons/fi';
 import ReportHeader from '@/components/Reports/ReportHeader';
 import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
+import Footer from '@/components/Footer';
 import { AnalysisJob } from '@/types/geo';
 
 interface Props {
@@ -227,7 +228,9 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
     : Math.floor((jobStatusSteps.findIndex(s => s.status === jobStatus) / (jobStatusSteps.length - 1)) * 100) || 0;
 
   return (
-      <main className="container flex-1 mx-auto py-8">
+    <div className="flex flex-col min-h-screen bg-blue-950 text-white">
+      <main className="flex-1 py-8 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
           {jobStatus !== 'COMPLETED' && !error && (
             <motion.div
               className="max-w-3xl mx-auto my-12"
@@ -279,7 +282,10 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
               </div>
             </div>
           )}
+        </div>
       </main>
+      <Footer />
+    </div>
   );
 };
 

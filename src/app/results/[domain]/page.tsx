@@ -1,6 +1,5 @@
 // import { redirect, notFound } from "next/navigation";
 import { type Metadata } from 'next';
-import Layout from '@/components/Layouts/Layout';
 import DynamicResults from '@/components/Pages/DynamicResults';
 
 
@@ -43,11 +42,9 @@ export default async function DynamicPage(
   const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   return (
-    <Layout>
-      <DynamicResults
-        key={`${plainDomain}-${timestamp}`}
-        plainDomain={plainDomain}
-      />
-    </Layout>
+    <DynamicResults 
+      key={`${plainDomain}-${timestamp}`}
+      plainDomain={plainDomain}
+    />
   );
 }

@@ -55,7 +55,9 @@ function DynamicReports({ domain }: Readonly<Props>) {
   }, [plainDomain, t, router]);
 
   return (
-      <main className="container flex-1 mx-auto py-8">
+    <div className="flex flex-col min-h-screen bg-blue-950 text-white">
+      <main className="flex-1 py-8 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
           {report?.prometheusReport && report?.arkheReport && (
             <motion.div
               className="space-y-6"
@@ -93,7 +95,10 @@ function DynamicReports({ domain }: Readonly<Props>) {
               </div>
             </div>
           )}
-    </main>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
