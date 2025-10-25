@@ -177,7 +177,7 @@ export interface AnalysisJob {
   url: string;
   urlHost?: string; // clean hostname without protocol/www
   locale: string; // 'en', 'tr',
-  status: 'QUEUED' | 'PROCESSING_SCRAPE' | 'PROCESSING_PSI' | 'PROCESSING_ARKHE' | 'PROCESSING_PROMETHEUS' | 'PROCESSING_LIR' | 'PROCESSING_GENERATIVE_PERFORMANCE' | 'PROCESSING_STRATEGIC_IMPACT' | 'COMPLETED' | 'FAILED';
+  status: 'QUEUED' | 'PROCESSING' | 'PROCESSING_SCRAPE' | 'PROCESSING_PSI' | 'PROCESSING_ARKHE' | 'PROCESSING_PROMETHEUS' | 'PROCESSING_LIR' | 'PROCESSING_GENERATIVE_PERFORMANCE' | 'PROCESSING_STRATEGIC_IMPACT' | 'COMPLETED' | 'FAILED';
   createdAt: string; // ISO 8601 formatında tarih
   updatedAt: string; // ISO 8601 formatında tarih
   finalGeoScore: number | null;

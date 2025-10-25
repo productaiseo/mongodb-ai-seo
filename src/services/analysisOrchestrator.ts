@@ -43,11 +43,6 @@ async function updateJob(job: AnalysisJob, updates: Partial<AnalysisJob>): Promi
     { upsert: true }
   ).exec();
 
-  // Log status changes for debugging
-  if (updates.status) {
-    logger.info(`[Orchestrator] Job ${job.id} status updated to: ${updates.status}`, 'updateJob');
-  }
-
   return { ...job, ...updatesWithTimestamp };
 }
 
@@ -97,7 +92,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
   // Add heartbeat logging to detect where it hangs
   const heartbeat = setInterval(() => {
     logger.info(`[Orchestrator] Heartbeat for job ${id} - still running...`, 'orchestrateAnalysis');
-  }, 10000); // Reduced frequency to 10s
+  }, 5000);
 
   try {
     await dbConnect();
@@ -111,8 +106,7 @@ export async function orchestrateAnalysis(job: AnalysisJob): Promise<void> {
       return;
     }
 
-    // REMOVED: job = await updateJob(job, { status: 'PROCESSING' });
-    // Start directly with PROCESSING_SCRAPE instead
+    job = await updateJob(job, { status: 'PROCESSING' });
     try { await appendJobEvent(id, { step: 'INIT', status: 'COMPLETED' }); } catch {}
 
     // ========================================
