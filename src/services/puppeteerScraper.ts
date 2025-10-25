@@ -127,7 +127,7 @@ async function getBrowser() {
   }
 }
 
-export async function puppeteerScraper(url: string): Promise<PlaywrightScrapeResult> {
+export async function scrapWithPuppeteer(url: string): Promise<PlaywrightScrapeResult> {
   const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') 
     ? url 
     : `https://${url}`;
