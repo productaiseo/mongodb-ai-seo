@@ -10,78 +10,63 @@ const RETRY_DELAY_MS = 2000;
 const OVERALL_TIMEOUT_MS = 45000; // 45 seconds max per attempt
 
 type Browser = import('playwright-core').Browser;
-
-let chromiumPkg: any;        // @sparticuz/chromium (prod)
-let pwChromium: any;         // chromium launcher from playwright-core/playwright
-
-/** Cache a single Browser per warm lambda to reduce cold starts */
 const g = globalThis as any;
+
 g.__PW_BROWSER__ ??= { browser: null as Browser | null };
+g.__PW_BROWSER_PROMISE__ ??= null as Promise<Browser> | null;
+g.__CHROMIUM_PATH_PROMISE__ ??= null as Promise<string> | null;
 
 async function getBrowser(): Promise<Browser> {
   const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
 
-  logger.info(
-    `[playwright-scraper] Environment check`,
-    'playwright environment',
-    {
-      isProduction,
-      NODE_ENV: process.env.NODE_ENV,
-      VERCEL: process.env.VERCEL,
-      VERCEL_ENV: process.env.VERCEL_ENV,
-      platform: process.platform,
-      arch: process.arch,
-      timestamp: new Date().toISOString(),
+  // Reuse healthy browser
+  const b = g.__PW_BROWSER__.browser as Browser | null;
+  if (b && b.isConnected()) return b;
+
+  // If another invocation is already launching, await it
+  if (g.__PW_BROWSER_PROMISE__) return g.__PW_BROWSER_PROMISE__;
+
+  // Launch once (guard with promise)
+  g.__PW_BROWSER_PROMISE__ = (async () => {
+    let browser: Browser;
+
+    if (isProduction) {
+      const [{ chromium: chromiumLauncher }, chromiumModule] = await Promise.all([
+        import('playwright-core').then(m => ({ chromium: m.chromium })),
+        import('@sparticuz/chromium')
+      ]);
+
+      const chromiumPkg = chromiumModule.default || chromiumModule;
+
+      // Ensure only ONE extraction to /tmp runs at a time across invocations
+      const executablePath =
+        (g.__CHROMIUM_PATH_PROMISE__ ||= chromiumPkg.executablePath());
+      const path = await executablePath;
+
+      browser = await chromiumLauncher.launch({
+        headless: true,
+        executablePath: path,
+        args: chromiumPkg.args,
+        chromiumSandbox: false,
+      });
+    } else {
+      const { chromium } = await import('playwright');
+      browser = await chromium.launch({ headless: true });
     }
-  );
 
-  if (g.__PW_BROWSER__.browser) {
-    try {
-      // Test if browser is still alive
-      const contexts = g.__PW_BROWSER__.browser.contexts();
-      logger.info(`[playwright-scraper] Reusing cached browser (${contexts.length} contexts)`, 'playwright-scraper');
-      return g.__PW_BROWSER__.browser!;
-    } catch (e) {
-      logger.warn(`[playwright-scraper] Cached browser is dead, creating new one`, 'playwright-scraper');
-      g.__PW_BROWSER__.browser = null;
-    }
-  }
-
-  if (isProduction) {
-    const [{ chromium: chromiumLauncher }, chromiumModule] = await Promise.all([
-      import('playwright-core').then(m => ({ chromium: m.chromium })),
-      import('@sparticuz/chromium')
-    ]);
-
-    pwChromium = chromiumLauncher;
-    chromiumPkg = chromiumModule.default || chromiumModule;
-
-    // Use Sparticuz’ packaged, brotli-compressed Chrome; no network fetch
-    const executablePath = await chromiumPkg.executablePath();
-
-    logger.info(`[playwright-scraper] Using executablePath: ${executablePath}`, 'playwright-scraper');
-
-    const browser = await pwChromium.launch({
-      headless: true,
-      executablePath,
-      args: chromiumPkg.args,            // good defaults for serverless
-      chromiumSandbox: false,            // lambda-safe
-    });
-
+    browser.on('disconnected', () => { g.__PW_BROWSER__.browser = null; });
     g.__PW_BROWSER__.browser = browser;
     return browser;
-  } else {
-    const { chromium } = await import('playwright');
-    pwChromium = chromium;
+  })();
 
-    const browser = await pwChromium.launch({
-      headless: true,
-    });
-
-    g.__PW_BROWSER__.browser = browser;
-    return browser;
+  try {
+    return await g.__PW_BROWSER_PROMISE__;
+  } finally {
+    // Clear the promise so a future relaunch can happen if this one dies later
+    g.__PW_BROWSER_PROMISE__ = null;
   }
 }
+
 
 /**
  * Scrape with overall timeout protection
