@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
 import { FiAlertCircle, FiDownload } from 'react-icons/fi';
@@ -11,24 +11,19 @@ import ProgressAnimation from '@/components/ProgressAnimation';
 import ReportTabs from '@/components/Reports/ReportTabs';
 import { AnalysisJob } from '@/types/geo';
 
-/*
 interface Props {
   plainDomain: string;
 }
-*/
 
-const DomainResultsPage = (
-  // { plainDomain }: Props
-) => {
+const DomainResultsPage = ({ plainDomain }: Props) => {
 
   const t = useTranslations("HomePage");
   const l = useTranslations("ResultsPage");
   const locale = useLocale();
   const router = useRouter();
-  const { domain } = useParams();
 
   const [jobId, setJobId] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
+const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
 
@@ -46,10 +41,6 @@ const DomainResultsPage = (
     { id: '7', label: t('steps.PROCESSING_LIR'), status: 'PROCESSING_LIR' },
     { id: '8', label: t('steps.COMPLETED'), status: 'COMPLETED' }
   ]), [t]);
-
-  // const params = useParams<{ domain: string }>();
-  console.log('DomainResultsPage params:', domain);
-  const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   // 1) PRE-CHECK: see if a report already exists
   useEffect(() => {
