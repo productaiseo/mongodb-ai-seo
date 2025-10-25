@@ -45,7 +45,7 @@ export default function Logo({
     <div className={`flex items-center ${className}`}>
       {!imageError ? (
         <Image
-          src="/logo.png"
+          src="/logo.svg"
           alt="AiSEO Logo"
           width={width}
           height={height}
