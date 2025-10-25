@@ -29,26 +29,24 @@ export async function generateMetadata(
 
 
 export default async function DynamicPage(
-/* 
   props: Readonly<{
     params: Promise<{ domain: string }>;
   }>
-*/
 ) {
-  // const params = await props.params;
+  const params = await props.params;
   // Extract the domain parameter from the params
-  // const { domain } = params;
+  const { domain } = params;
 
   // Use timestamp to force fresh render
-  // const timestamp = Date.now();
+  const timestamp = Date.now();
 
-  // const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
+  const plainDomain = typeof domain === 'string' ? decodeURIComponent(domain) : '';
 
   return (
     <Layout>
       <DynamicResults
-        // key={`${plainDomain}-${timestamp}`}
-        // plainDomain={plainDomain}
+        key={`${plainDomain}-${timestamp}`}
+        plainDomain={plainDomain}
       />
     </Layout>
   );
