@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
@@ -28,9 +28,6 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [geoReport, setGeoReport] = useState<AnalysisJob | null>(null);
 
-  const retryCountRef = useRef(0);
-  const maxRetries = 3;
-
   // Build steps with localized labels
   const jobStatusSteps = useMemo(() => ([
     { id: '1', label: t('steps.QUEUED'), status: 'QUEUED' },
@@ -50,18 +47,11 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
     const precheck = async () => {
       try {
         setError(null);
-        retryCountRef.current = 0;
 
-        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { 
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-          }
-        });
+        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { cache: 'no-store' });
 
         if (res.status === 404) {
           // no report; start fresh
-          console.log('[precheck] No existing report found, starting new analysis');
           await startAnalysis();
           return;
         }
@@ -75,144 +65,85 @@ const DomainResultsPage = ({ plainDomain }: Props) => {
 
         if (data.status === 'COMPLETED' && data.job) {
           // redirect to the canonical report page
-          console.log('[precheck] Found completed report, redirecting');
           router.replace(`/report/${encodeURIComponent(plainDomain)}`);
           return;
         }
 
         // If there is a running job, resume polling
         if (data.status && data.jobId) {
-          console.log('[precheck] Found running job, resuming polling:', data.jobId);
           setJobId(data.jobId);
           setJobStatus(data.status);
           return;
         }
 
         // Otherwise, start a new analysis
-        console.log('[precheck] No valid job found, starting new analysis');
         await startAnalysis();
       } catch (err) {
-        console.error('[precheck] Error:', err);
         setError(err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.');
       }
     };
 
     const startAnalysis = async () => {
-      try {
-        console.log('[startAnalysis] Starting analysis for:', plainDomain);
-        setJobStatus('QUEUED');
-        
-        const response = await fetch(`/api/analyze-domain`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-          cache: 'no-store',
-          body: JSON.stringify({ url: plainDomain, locale }),
-        });
+      setJobStatus('QUEUED');
+      const response = await fetch(`/api/analyze-domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: plainDomain, locale }),
+      });
 
-        if (!response.ok) {
-          let message = 'Analiz başlatılamadı.';
-          try {
-            const errorData = await response.json();
-            message = (errorData?.error || errorData?.message) || message;
-          } catch {
-            try { message = (await response.text()) || message; } catch {}
-          }
-          throw new Error(message);
+      if (!response.ok) {
+        let message = 'Analiz başlatılamadı.';
+        try {
+          const errorData = await response.json();
+          message = (errorData?.error || errorData?.message) || message;
+        } catch {
+          try { message = (await response.text()) || message; } catch {}
         }
-
-        const data = await response.json();
-        console.log('[startAnalysis] Response:', data);
-
-        if (data.mockData) {
-          localStorage.setItem('currentAnalysisData', JSON.stringify(data.mockData));
-          router.replace(`/ai-report/${encodeURIComponent(plainDomain)}`);
-          return;
-        }
-
-        if (!data.jobId) {
-          throw new Error('No jobId returned from analyze-domain API');
-        }
-
-        console.log('[startAnalysis] Job created with ID:', data.jobId);
-        setJobId(data.jobId);
-      } catch (err) {
-        console.error('[startAnalysis] Error:', err);
-        throw err;
+        throw new Error(message);
       }
+
+      const data = await response.json();
+      if (data.mockData) {
+        localStorage.setItem('currentAnalysisData', JSON.stringify(data.mockData));
+        router.replace(`/ai-report/${encodeURIComponent(plainDomain)}`);
+        return;
+      }
+      setJobId(data.jobId);
     };
 
     precheck();
   }, [plainDomain, locale, router]);
 
-  // 2) Poll job status with retry logic
+  // 2) Poll job status (unchanged)
   useEffect(() => {
     if (!jobId || jobStatus === 'COMPLETED' || jobStatus === 'FAILED') return;
 
-    console.log('[polling] Starting poll for jobId:', jobId);
-
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/internal/job-status/${jobId}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-          }
-        });
-
-        if (response.status === 404) {
-          // Job not found - might be a race condition, retry a few times
-          if (retryCountRef.current < maxRetries) {
-            retryCountRef.current++;
-            console.warn(`[polling] Job not found, retry ${retryCountRef.current}/${maxRetries}`);
-            return; // Keep polling
-          } else {
-            clearInterval(interval);
-            setError('İş bulunamadı. Lütfen sayfayı yenileyin veya yeni bir analiz başlatın.');
-            return;
-          }
-        }
-
-        if (!response.ok) {
-          throw new Error('İş durumu alınamadı.');
-        }
+        const response = await fetch(`/api/internal/job-status/${jobId}`);
+        if (!response.ok) throw new Error('İş durumu alınamadı.');
 
         const data = await response.json();
-        console.log('[polling] Job status:', data.status);
-
-        // Reset retry count on successful fetch
-        retryCountRef.current = 0;
-        
         setJobStatus(data.status);
 
         if (data.status === 'COMPLETED') {
           clearInterval(interval);
           setGeoReport(data.job);
-          console.log('[polling] Job completed successfully');
+          // Optional: also push to /report page on completion to unify URL
+          // router.replace(`/report/${encodeURIComponent(plainDomain)}`);
         } else if (data.status === 'FAILED') {
           clearInterval(interval);
           setError(data.error || 'Analiz sırasında bir hata oluştu.');
-          console.error('[polling] Job failed:', data.error);
         }
       } catch (err) {
-        console.error('[polling] Error:', err);
-        if (retryCountRef.current < maxRetries) {
-          retryCountRef.current++;
-          console.warn(`[polling] Error, retry ${retryCountRef.current}/${maxRetries}`);
-        } else {
-          clearInterval(interval);
-          setError(err instanceof Error ? err.message : 'Durum kontrolü sırasında hata.');
-        }
+        clearInterval(interval);
+        setError(err instanceof Error ? err.message : 'Durum kontrolü sırasında hata.');
       }
     }, 5000);
 
-    return () => {
-      console.log('[polling] Cleanup interval');
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [jobId, jobStatus]);
+
 
   const getCurrentStep = () => {
     const currentStepIndex = jobStatusSteps.findIndex(step => step.status === jobStatus);
