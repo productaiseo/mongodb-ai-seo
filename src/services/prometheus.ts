@@ -194,6 +194,22 @@ function calculateOverallGeoScore(pillars: PrometheusReport['pillars']): number 
   return Math.round(normalizedScore);
 }
 
+
+  function to0to100(x: number | undefined | null): number {
+    if (x == null || Number.isNaN(x)) return 0;
+    // Defensive normalization:
+    // - If it's already 0..100, keep it.
+    // - If it's 0..10, scale by 10.
+    // - If it's 0..1 (rare), scale by 100.
+    // - Otherwise clamp.
+    if (x >= 0 && x <= 1) return Math.round(x * 100);
+    if (x > 1 && x <= 10) return Math.round(x * 10);
+    if (x < 0) return 0;
+    if (x > 100) return 100;
+    return Math.round(x);
+  }
+
+
 /**
  * EEATAnalysis türünü Record<string, MetricScore> türüne dönüştürür.
  * @param eeatAnalysis - Dönüştürülecek EEAT analizi sonucu.
@@ -209,8 +225,10 @@ function formatEEATMetrics(eeatAnalysis: EEATAnalysis): Record<string, MetricSco
         negativePoints: [],
       };
     }
+    const normalized = to0to100(component.score);
     return {
-      score: component.score,
+      score: normalized,
+      // justification: `${component.justification} (normalized to 0–100 from ${component.score})`,
       justification: component.justification,
       positivePoints: component.positiveSignals,
       negativePoints: component.negativeSignals,
@@ -218,10 +236,10 @@ function formatEEATMetrics(eeatAnalysis: EEATAnalysis): Record<string, MetricSco
   };
 
   return {
-    experience: formatComponent(eeatAnalysis.experience),
-    expertise: formatComponent(eeatAnalysis.expertise),
-    authoritativeness: formatComponent(eeatAnalysis.authoritativeness),
-    trustworthiness: formatComponent(eeatAnalysis.trustworthiness),
+    experience: formatComponent(eeatAnalysis?.experience),
+    expertise: formatComponent(eeatAnalysis?.expertise),
+    authoritativeness: formatComponent(eeatAnalysis?.authoritativeness),
+    trustworthiness: formatComponent(eeatAnalysis?.trustworthiness),
   };
 }
 
@@ -284,15 +302,46 @@ export async function runPrometheusAnalysis(job: AnalysisJob, locale: string): P
     };
 
     const pillars: PrometheusReport['pillars'] = {
-      performance: { score: calculatePillarScore(performanceMetrics, 'performance'), weight: 0.20, metrics: performanceMetrics },
-      contentStructure: { score: calculatePillarScore(contentStructureMetrics, 'contentStructure'), weight: 0.15, metrics: contentStructureMetrics },
-      eeatSignals: { score: calculatePillarScore(eeatSignalsMetrics, 'eeatSignals'), weight: 0.20, metrics: eeatSignalsMetrics },
-      technicalGEO: { score: calculatePillarScore(technicalGEOMetrics, 'technicalGEO'), weight: 0.10, metrics: technicalGEOMetrics },
-      structuredData: { score: calculatePillarScore(structuredDataMetrics, 'structuredData'), weight: 0.05, metrics: structuredDataMetrics },
-      brandAuthority: { score: calculatePillarScore(brandAuthorityMetrics, 'brandAuthority'), weight: 0.10, metrics: brandAuthorityMetrics },
-      entityOptimization: { score: calculatePillarScore(entityOptimizationMetrics, 'entityOptimization'), weight: 0.10, metrics: entityOptimizationMetrics },
-      contentStrategy: { score: calculatePillarScore(contentStrategyMetrics, 'contentStrategy'), weight: 0.10, metrics: contentStrategyMetrics },
-      // userJourney direği kaldırıldı, ağırlıklar yeniden dağıtıldı.
+      performance: {
+        score: calculatePillarScore(performanceMetrics, 'performance', { applyPenalties: false }), // no penalty
+        weight: 0.20,
+        metrics: performanceMetrics
+      },
+      contentStructure: {
+        score: calculatePillarScore(contentStructureMetrics, 'contentStructure', { applyPenalties: false }),
+        weight: 0.15,
+        metrics: contentStructureMetrics
+      },
+      eeatSignals: {
+        score: calculatePillarScore(eeatSignalsMetrics, 'eeatSignals', { applyPenalties: false }), // no penalty
+        weight: 0.20,
+        metrics: eeatSignalsMetrics
+      },
+      technicalGEO: {
+        score: calculatePillarScore(technicalGEOMetrics, 'technicalGEO', { applyPenalties: false }),
+        weight: 0.10,
+        metrics: technicalGEOMetrics
+      },
+      structuredData: {
+        score: calculatePillarScore(structuredDataMetrics, 'structuredData', { applyPenalties: false }),
+        weight: 0.05,
+        metrics: structuredDataMetrics
+      },
+      brandAuthority: {
+        score: calculatePillarScore(brandAuthorityMetrics, 'brandAuthority', { applyPenalties: false }),
+        weight: 0.10,
+        metrics: brandAuthorityMetrics
+      },
+      entityOptimization: {
+        score: calculatePillarScore(entityOptimizationMetrics, 'entityOptimization', { applyPenalties: false }),
+        weight: 0.10,
+        metrics: entityOptimizationMetrics
+      },
+      contentStrategy: {
+        score: calculatePillarScore(contentStrategyMetrics, 'contentStrategy', { applyPenalties: false }),
+        weight: 0.10,
+        metrics: contentStrategyMetrics
+      }
     };
 
     const overallGeoScore = calculateOverallGeoScore(pillars);

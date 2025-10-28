@@ -8,7 +8,15 @@ const metricWeights: Record<string, number> = {
   entityCompleteness: 0.25,
 };
 
-export function calculatePillarScore(metrics: Record<string, MetricScore>, pillarName: string): number {
+type PillarScoreOptions = {
+  applyPenalties?: boolean; // NEW
+};
+
+export function calculatePillarScore(
+  metrics: Record<string, MetricScore>,
+  pillarName: string,
+  options: PillarScoreOptions = { applyPenalties: true } // NEW default: keep old behavior
+): number {
   const metricValues = Object.entries(metrics).filter(([key]) => key !== 'overallLighthouseScore');
   if (metricValues.length === 0) return 0;
 
@@ -38,52 +46,35 @@ export function calculatePillarScore(metrics: Record<string, MetricScore>, pilla
 
   let finalScore = totalScore / totalWeight;
 
-  // Apply penalty: -5 points per negative point across metrics
-  const negativeCount = metricValues.reduce((acc, [, m]) => acc + (m.negativePoints?.length || 0), 0);
-  if (negativeCount > 0) {
-    finalScore -= negativeCount * 5;
-  }
-  // Additional penalty for metrics marked as NEEDS_IMPROVEMENT / POOR in justification
-  const needsImprovementCount = metricValues.reduce((acc, [, m]) => acc + (m.justification?.includes('NEEDS_IMPROVEMENT') ? 1 : 0), 0);
-  const poorCount = metricValues.reduce((acc, [, m]) => acc + (m.justification?.includes('POOR') ? 1 : 0), 0);
-  finalScore -= needsImprovementCount * 5;
-  finalScore -= poorCount * 10;
+  // ── Penalties now optional ─────────────────────────────────────────
+  if (options.applyPenalties) {
+    const negativeCount = metricValues.reduce((acc, [, m]) => acc + (m.negativePoints?.length || 0), 0);
+    if (negativeCount > 0) finalScore -= negativeCount * 5;
 
-  // Clamp 0..100
+    const needsImprovementCount = metricValues.reduce(
+      (acc, [, m]) => acc + (m.justification?.includes('NEEDS_IMPROVEMENT') ? 1 : 0), 0
+    );
+    const poorCount = metricValues.reduce(
+      (acc, [, m]) => acc + (m.justification?.includes('POOR') ? 1 : 0), 0
+    );
+    finalScore -= needsImprovementCount * 5;
+    finalScore -= poorCount * 10;
+  }
+  // ───────────────────────────────────────────────────────────────────
+
   if (finalScore < 0) finalScore = 0;
   if (finalScore > 100) finalScore = 100;
   return Math.round(finalScore);
 }
 
-
-/**
- * Hatalı alt bileşenleri tolere eden esnek bir puanlama hesaplama fonksiyonu.
- * Puanı null olan bileşenleri hesaplama dışında tutar ve ağırlıkları yeniden dağıtır.
- * @param subcomponents - Puanlanacak alt bileşenlerin dizisi.
- * @returns Ağırlıklı ortalama puan. Eğer tüm bileşenler hatalıysa 0 döner.
- */
+// (no changes below this point)
 export function calculateResilientScore(subcomponents: SubcomponentScore[]): number {
-  const validSubcomponents = subcomponents.filter(
-    (sc) => sc.score !== null && sc.score !== undefined
-  );
+  const validSubcomponents = subcomponents.filter((sc) => sc.score !== null && sc.score !== undefined);
+  if (validSubcomponents.length === 0) return 0;
 
-  if (validSubcomponents.length === 0) {
-    return 0;
-  }
+  const totalWeight = validSubcomponents.reduce((sum, sc) => sum + sc.weight, 0);
+  if (totalWeight === 0) return 0;
 
-  const totalWeight = validSubcomponents.reduce(
-    (sum, sc) => sum + sc.weight,
-    0
-  );
-
-  if (totalWeight === 0) {
-    return 0;
-  }
-
-  const weightedScore = validSubcomponents.reduce(
-    (sum, sc) => sum + (sc.score! * sc.weight),
-    0
-  );
-
+  const weightedScore = validSubcomponents.reduce((sum, sc) => sum + (sc.score! * sc.weight), 0);
   return weightedScore / totalWeight;
 }
