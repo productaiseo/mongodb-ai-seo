@@ -28,7 +28,9 @@ function DynamicReports({ domain }: Readonly<Props>) {
     const load = async () => {
       try {
         setError(null);
-        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { cache: 'no-store' });
+        
+        const apiReportsUrl = `${process.env.NEXT_PUBLIC_API_URL}/reports/${encodeURIComponent(plainDomain)}`;
+        const res = await fetch(apiReportsUrl, { cache: 'no-store' });
         if (!res.ok) {
           const text = await res.text();
           throw new Error(text || 'Rapor getirilemedi.');

@@ -60,7 +60,9 @@ const DomainResultsPage = (
         setError(null);
         retryCountRef.current = 0;
 
-        const res = await fetch(`/api/reports/${encodeURIComponent(plainDomain)}`, { 
+        const apiReportsUrl = `${process.env.NEXT_PUBLIC_API_URL}/reports/${encodeURIComponent(plainDomain)}`;
+        console.log('[precheck] apiReportsUrl:', apiReportsUrl);
+        const res = await fetch(apiReportsUrl, { 
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',
@@ -109,8 +111,9 @@ const DomainResultsPage = (
       try {
         console.log('[startAnalysis] Starting analysis for:', plainDomain);
         setJobStatus('PROCESSING_SCRAPE');
-        
-        const response = await fetch(`/api/internal/start-analysis`, {
+
+        const apiAnalysisUrl = `${process.env.NEXT_PUBLIC_API_URL}/internal/start-analysis`;
+        const response = await fetch(apiAnalysisUrl, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -157,7 +160,8 @@ const DomainResultsPage = (
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/internal/job-status/${jobId}`, {
+        const apiJobStatusUrl = `${process.env.NEXT_PUBLIC_API_URL}/internal/job-status/${jobId}`;
+        const response = await fetch(apiJobStatusUrl, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',
