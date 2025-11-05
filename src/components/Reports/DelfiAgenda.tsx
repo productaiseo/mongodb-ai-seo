@@ -14,7 +14,7 @@ const DelfiAgenda: React.FC<DelfiAgendaProps> = ({ report }) => {
   if (!report) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 md:p-6">
       <div>
         <h3 className="flex items-center text-xl font-bold text-white mb-3">
           <FiTarget className="mr-2 text-cyan-400" />

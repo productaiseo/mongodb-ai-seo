@@ -116,9 +116,9 @@ const ReportTabs: React.FC<ReportTabsProps> = ({ jobReport }) => {
   };
 
   return (
-    <div className="w-full bg-blue-900/20 rounded-lg border border-blue-800/30 p-6">
+    <div className="w-full bg-blue-900/20 rounded-lg border border-blue-800/30">
 
-        <nav className="-mb-px flex flex-wrap w-full space-x-6 border-b border-blue-700/50" aria-label="Tabs">
+        <nav className="-mb-px flex flex-wrap w-full space-x-6 border-b border-blue-700/50 pt-4 px-4" aria-label="Tabs">
           {tabs?.map((tab) => (
             <button
               key={tab?.id}

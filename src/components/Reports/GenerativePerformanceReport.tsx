@@ -37,7 +37,7 @@ const GenerativePerformanceReport: React.FC<GenerativePerformanceReportProps> = 
   const { shareOfGenerativeVoice, citationAnalysis, sentimentAnalysis, accuracyAndHallucination } = report;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <h2 className="text-2xl font-bold text-cyan-400">{t('sections.generativePerformance.subTitle')}</h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
