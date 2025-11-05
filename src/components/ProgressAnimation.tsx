@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslations } from "next-intl";
 import { motion } from 'framer-motion';
 import { FiCheck, FiLoader } from 'react-icons/fi';
@@ -18,11 +19,53 @@ type ProgressAnimationProps = {
 
 const ProgressAnimation: React.FC<ProgressAnimationProps> = ({ steps, progress }) => {
   const t = useTranslations("ResultsPage");
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(120);
+
+  // Total duration: 2 minutes (120 seconds)
+  const TOTAL_DURATION = 120;
+
+  useEffect(() => {
+    // Calculate remaining time based on progress
+    const remaining = Math.max(0, Math.ceil(TOTAL_DURATION * (1 - progress / 100)));
+    setRemainingSeconds(remaining);
+  }, [progress]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (progress >= 100 || remainingSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [progress, remainingSeconds]);
+
+  // Format seconds to MM:SS or just seconds
+  const formatTime = (seconds: number): string => {
+    if (seconds >= 60) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${seconds}s`;
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 w-full max-w-2xl mx-auto shadow-xl border border-blue-800/20">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-white">{t('sections.currentStage')}</h2>
-        <div className="text-3xl font-bold text-cyan-400">{progress}%</div>
+        <div className="flex items-end gap-3">
+          <div className="text-3xl font-bold text-cyan-400">{progress}%</div>
+          {remainingSeconds > 0 && (
+            <div className="text-cyan-400">
+              {formatTime(remainingSeconds)}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* İlerleme çubuğu */}
@@ -78,4 +121,4 @@ const ProgressAnimation: React.FC<ProgressAnimationProps> = ({ steps, progress }
   );
 };
 
-export default ProgressAnimation; 
+export default ProgressAnimation;
