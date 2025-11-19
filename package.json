@@ -54,6 +54,9 @@
     "@types/react-dom": "19.2.2",
     "next-intl": {
       "next": "^16.0.0"
+    },
+    "openai": {
+      "zod": "^4.1.12"
     }
   },
   "engines": {
