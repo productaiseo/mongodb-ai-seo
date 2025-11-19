@@ -8,7 +8,7 @@ import { FiAlertTriangle, FiArrowLeft } from 'react-icons/fi';
 function ErrorContent() {
 
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
+  const error = searchParams?.get('error');
 
   const errorMessages: { [key: string]: string } = {
     Configuration: 'Sunucu yapılandırmasında bir sorun var. Lütfen daha sonra tekrar deneyin.',
