@@ -19,9 +19,9 @@ export default function Logo({
 
   // Boyut ayarları
   const sizes = {
-    header: { width: 200, height: 60, textSize: 'text-2xl' },
-    footer: { width: 150, height: 45, textSize: 'text-xl' },
-    large: { width: 300, height: 90, textSize: 'text-4xl' }
+    header: { width: 124, height: 60, textSize: 'text-2xl' },
+    footer: { width: 93, height: 45, textSize: 'text-xl' },
+    large: { width: 186, height: 90, textSize: 'text-4xl' }
   };
 
   const { width, height, textSize } = sizes[variant];
@@ -45,7 +45,7 @@ export default function Logo({
     <div className={`flex items-center ${className}`}>
       {!imageError ? (
         <Image
-          src="/logo.png"
+          src="/logo-cropped.png"
           alt="AiSEO Logo"
           width={width}
           height={height}

@@ -13,7 +13,7 @@ const Navbar = () => {
   const t = useTranslations("HomePage");
 
   return (
-      <div className="container flex justify-between items-center mx-auto z-10">
+      <div className="container flex justify-between items-center mx-auto px-4 md:px-0 z-10">
         <Logo variant="header" />
 
         <div className="flex items-center gap-6">
