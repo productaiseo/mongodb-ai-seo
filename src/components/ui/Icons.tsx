@@ -301,4 +301,18 @@ export const Icons = {
     </svg>
   ),
 
+  Signin: (props: IconProps) => (
+      <svg
+        {...props}
+        xmlns="http://www.w3.org/2000/svg"
+        width="800"
+        height="800"
+        viewBox="0 0 16 16"
+        fill="currentColor"
+      >
+        <path fill="none" d="M0 0h16v16H0z"/>
+        <path d="M14 14V2H8V0h8v16H8v-2zm-6.998-.998L12 8 7 3 5.584 4.416 8.172 7H0v2h8.172l-2.586 2.586z"/>
+      </svg>
+  ),
+
 };

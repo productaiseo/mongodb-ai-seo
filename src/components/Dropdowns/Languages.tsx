@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -47,7 +47,7 @@ const Languages = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 border border-white/20 px-3 py-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+      <DropdownMenuTrigger className="flex items-center gap-2 border border-white/20 px-3 py-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors hover:cursor-pointer">
         {currentLanguage ? (
           <>
             {/* <span className="text-lg">{currentLanguage?.flag}</span> */}
@@ -58,7 +58,7 @@ const Languages = () => {
               height={20}
               className="rounded-sm"
             />
-            <span className="text-sm font-medium">
+            <span className="hidden sm:inline text-sm font-medium">
               {currentLanguage?.code.toUpperCase()}
             </span>
           </>

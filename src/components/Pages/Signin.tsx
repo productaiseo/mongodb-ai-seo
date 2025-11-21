@@ -65,10 +65,10 @@ const SignInPage = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center w-full mx-auto py-8 bg-gradient-to-b from-blue-950 to-cyan-900 text-white">
       {/* Card Container with Glass Effect */}
-      <div className="w-md bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+      <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
         
         {/* Header Section with Logo */}
-        <div className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 px-8 pt-10 pb-8 text-center">
+        <div className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 px-8 py-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-2">
             Hoş Geldiniz
           </h2>
@@ -255,11 +255,11 @@ const SignInPage = () => {
       <div className="mt-6 text-center">
         <p className="text-xs text-blue-200/60">
           Giriş yaparak{" "}
-          <Link href="/terms" className="underline hover:text-blue-200 transition-colors">
+          <Link href="/#" className="underline hover:text-blue-200 transition-colors">
             Kullanım Koşulları
           </Link>
           {" "}ve{" "}
-          <Link href="/privacy" className="underline hover:text-blue-200 transition-colors">
+          <Link href="/#" className="underline hover:text-blue-200 transition-colors">
             Gizlilik Politikası
           </Link>
           'nı kabul etmiş olursunuz.
