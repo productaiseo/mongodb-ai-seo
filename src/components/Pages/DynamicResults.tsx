@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from "next-intl";
@@ -25,7 +25,7 @@ const DomainResultsPage = (
   const l = useTranslations("ResultsPage");
   const locale = useLocale();
   const router = useRouter();
-  const { domain } = useParams();
+  const { domain }: any = useParams();
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');

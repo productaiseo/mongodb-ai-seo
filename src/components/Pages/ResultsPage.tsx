@@ -21,7 +21,7 @@ const ResultsPage = () => {
   const searchParams = useSearchParams();
   
   // Get domain from query parameter
-  const domain = searchParams.get('website');
+  const domain = searchParams?.get('website');
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>('PROCESSING_SCRAPE');
