@@ -7,75 +7,54 @@ const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID;
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 
-interface BasketItem {
-  name: string;
-  price: string;
-  quantity: number;
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate required fields
-    if (!MERCHANT_ID || !MERCHANT_KEY || !MERCHANT_SALT) {
-      return NextResponse.json({
-        success: false,
-        error: 'PayTR configuration is missing',
-      }, { status: 500 });
-    }
-
     // Get user's real IP address
     const userIp = request.headers.get('x-forwarded-for')?.split(',')[0] || 
                    request.headers.get('x-real-ip') || 
-                   '88.230.12.132'; // Fallback IP for development
+                   '88.230.12.132'; // Fallback IP
 
-    // Get basket from request or use default
-    const basket: BasketItem[] = body.basket || [
-      { name: 'Sample Product', price: (body.amount / 100).toFixed(2), quantity: 1 }
+    // Prepare basket data (typed for OrderManager). For PayTR API we also build an array-of-arrays.
+    const basket = [
+      { name: 'Sample Product 1', price: '18.00', quantity: 1 },
+      { name: 'Sample Product 2', price: '33.25', quantity: 2 },
+      { name: 'Sample Product 3', price: '45.42', quantity: 1 },
     ];
-
-    // PayTR expects user_basket as base64-encoded JSON array of arrays: [name, price, quantity]
+    // PayTR expects user_basket as base64-encoded JSON array of arrays: [name,price,quantity]
     const paytrBasket = basket.map(item => [item.name, item.price, item.quantity]);
     const userBasket = Buffer.from(JSON.stringify(paytrBasket)).toString('base64');
 
-    // Generate unique merchant order ID
-    const merchantOid = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    /*
+    const basket = [
+      ['Sample Product 1', '18.00', 1],
+      ['Sample Product 2', '33.25', 2],
+      ['Sample Product 3', '45.42', 1]
+    ];
+    const userBasket = Buffer.from(JSON.stringify(basket)).toString('base64');
+    */
 
-    // Payment parameters with validation
-    const paymentAmount = body.amount || 10000; // Amount in kuruş (multiply by 100)
-    const email = body.email || 'customer@example.com';
-    const userName = body.userName || 'Müşteri';
-    const userAddress = body.userAddress || 'Türkiye';
+    // Generate unique merchant order ID
+    const merchantOid = `IN${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+    // Payment parameters
+    const paymentAmount = body.amount || 100; // Amount in kuruş (multiply by 100)
+    const email = body.email || 'eren@aiseoptimizer.com';
+    const userName = body.userName || 'Eren Çöp';
+    const userAddress = body.userAddress || 'Istanbul';
     const userPhone = body.userPhone || '05555555555';
     const currency = body.currency || 'TL';
     const maxInstallment = body.maxInstallment || '0';
     const noInstallment = body.noInstallment || '0';
     const testMode = body.testMode || '1'; // Set to 1 for testing
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid email format',
-      }, { status: 400 });
-    }
+    // Success and fail URLs - Update these to your actual URLs
+    const merchantOkUrl = `${process.env.NEXT_PUBLIC_URL}/payment/success`;
+    const merchantFailUrl = `${process.env.NEXT_PUBLIC_URL}/payment/failed`;
 
-    // Validate amount (minimum 100 kuruş = 1 TL)
-    if (paymentAmount < 100) {
-      return NextResponse.json({
-        success: false,
-        error: 'Payment amount must be at least 1 TL',
-      }, { status: 400 });
-    }
-
-    // Success and fail URLs
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
-    const merchantOkUrl = `${baseUrl}/payment/success`;
-    const merchantFailUrl = `${baseUrl}/payment/failed`;
-
-    // Generate paytr_token hash according to PayTR documentation
+    // Generate paytr_token hash
     const hashString = `${MERCHANT_ID}${userIp}${merchantOid}${email}${paymentAmount}${userBasket}${noInstallment}${maxInstallment}${currency}${testMode}`;
     const paytrToken = hashString + MERCHANT_SALT;
     const token = crypto
@@ -85,9 +64,9 @@ export async function POST(request: NextRequest) {
 
     // Prepare form data for PayTR API
     const formData = new URLSearchParams({
-      merchant_id: MERCHANT_ID,
-      merchant_key: MERCHANT_KEY,
-      merchant_salt: MERCHANT_SALT,
+      merchant_id: MERCHANT_ID as string,
+      merchant_key: MERCHANT_KEY as string,
+      merchant_salt: MERCHANT_SALT as string,
       email: email,
       payment_amount: paymentAmount.toString(),
       merchant_oid: merchantOid,
@@ -99,7 +78,7 @@ export async function POST(request: NextRequest) {
       user_basket: userBasket,
       user_ip: userIp,
       timeout_limit: '30',
-      debug_on: '1', // Keep this 1 for debugging, set to 0 in production
+      debug_on: '1',
       test_mode: testMode,
       lang: 'tr',
       no_installment: noInstallment,
@@ -107,8 +86,6 @@ export async function POST(request: NextRequest) {
       currency: currency,
       paytr_token: token,
     });
-
-    console.log('Requesting PayTR token for order:', merchantOid);
 
     // Request iframe token from PayTR
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
@@ -120,7 +97,6 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-    console.log('PayTR API response:', data);
 
     if (data.status === 'success') {
       // Store order in database with 'pending' status
@@ -135,14 +111,10 @@ export async function POST(request: NextRequest) {
           currency,
           testMode: testMode === '1',
           basket: basket,
-          planId: body.planId || null,
-          planName: body.planName || null,
         });
-        console.log('Order created in database:', merchantOid);
       } catch (dbError) {
         console.error('Failed to create order in database:', dbError);
         // Continue even if DB fails - payment can still be processed
-        // You might want to handle this differently in production
       }
 
       return NextResponse.json({
@@ -151,7 +123,6 @@ export async function POST(request: NextRequest) {
         merchantOid: merchantOid,
       });
     } else {
-      console.error('PayTR token generation failed:', data);
       return NextResponse.json({
         success: false,
         error: data.reason || 'Token generation failed',

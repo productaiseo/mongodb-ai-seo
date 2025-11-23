@@ -1,82 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PaytrIframe from '@/components/PaytrIframe';
 
+
 export default function PaymentPage() {
+
+  const searchParams = useSearchParams();
   const [iframeToken, setIframeToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [merchantOid, setMerchantOid] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const initiatePayment = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const oid = searchParams.get('merchantOid');
 
-    try {
-      const response = await fetch('/api/paytr/get-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: 10000, // 100.00 TL (multiply by 100)
-          email: 'yusuf@aiseoptimizer.com',
-          userName: 'Müşteri Adı',
-          userAddress: 'İstanbul, Türkiye',
-          userPhone: '05555555555',
-          currency: 'TL',
-          maxInstallment: '0',
-          noInstallment: '0',
-          testMode: '1', // Test mode
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setIframeToken(data.iframeToken);
-      } else {
-        setError(data.error || 'Payment initialization failed');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Payment initiation error:', err);
-    } finally {
+    if (token && oid) {
+      setIframeToken(token);
+      setMerchantOid(oid);
       setLoading(false);
+    } else {
+      // If no token in URL, redirect back to pricing page
+      window.location.href = '/pricing';
     }
-  };
+  }, [searchParams]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Ödeme sayfası yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">PayTR Payment</h1>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Güvenli Ödeme</h1>
+          <p className="text-gray-600">
+            Sipariş No: <span className="font-semibold">{merchantOid}</span>
+          </p>
+        </div>
 
-      {!iframeToken ? (
-        <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            <div className="mb-6">
-              <p className="text-gray-600">Amount: 100.00 TL</p>
-              <p className="text-gray-600">Products: 3 items</p>
+        {iframeToken && <PaytrIframe iframeToken={iframeToken} />}
+
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm text-blue-800">
+              <p className="font-semibold mb-1">Güvenli Ödeme</p>
+              <p>Ödemeniz PayTR güvencesi altında işlenmektedir. Kart bilgileriniz güvenle şifrelenir ve saklanmaz.</p>
             </div>
-
-            <button
-              onClick={initiatePayment}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Loading...' : 'Proceed to Payment'}
-            </button>
-
-            {error && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {error}
-              </div>
-            )}
           </div>
         </div>
-      ) : (
-        <PaytrIframe iframeToken={iframeToken} />
-      )}
+      </div>
     </div>
   );
 }

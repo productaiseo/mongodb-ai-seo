@@ -18,6 +18,8 @@ export interface PaymentOrder {
     price: string;
     quantity: number;
   }>;
+  planId?: string;
+  planName?: string;
   createdAt: Date;
   paidAt?: Date;
   updatedAt: Date;

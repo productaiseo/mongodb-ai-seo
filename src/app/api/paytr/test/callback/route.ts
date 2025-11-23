@@ -28,12 +28,14 @@ export async function POST(request: NextRequest) {
     const currency = formData.get('currency') as string;
     const paymentAmount = formData.get('payment_amount') as string;
 
-    console.log('=== PayTR Callback Received ===');
-    console.log('Merchant OID:', merchantOid);
-    console.log('Status:', status);
-    console.log('Total Amount:', totalAmount);
-    console.log('Test Mode:', testMode);
-    console.log('Payment Type:', paymentType);
+    console.log('PayTR Callback Received:', {
+      merchantOid,
+      status,
+      totalAmount,
+      testMode,
+      paymentType,
+      currency,
+    });
 
     // CRITICAL: Validate hash to ensure request is from PayTR and data is intact
     const paytrToken = merchantOid + MERCHANT_SALT + status + totalAmount;
@@ -48,21 +50,15 @@ export async function POST(request: NextRequest) {
         calculated: calculatedHash,
       });
       
-     // CRITICAL: Do not return OK if hash doesn't match
-      return new NextResponse('Hash validation failed', { status: 400 });
+      // Still return OK to prevent PayTR from retrying with invalid data
+      return new NextResponse('OK', { status: 200 });
     }
 
-    console.log('Hash validation successful');
-
     // Check if this order has already been processed (handle duplicate notifications)
-    try {
-      const isProcessed = await OrderManager.isOrderProcessed(merchantOid);
-      if (isProcessed) {
-        console.log(`Order ${merchantOid} already processed, returning OK`);
-        return new NextResponse('OK', { status: 200 });
-      }
-    } catch (error) {
-      console.error('Error checking existing order:', error);
+    const isProcessed = await OrderManager.isOrderProcessed(merchantOid);
+    if (isProcessed) {
+      console.log(`Order ${merchantOid} already processed, returning OK`);
+      return new NextResponse('OK', { status: 200 });
     }
 
     // Process the payment based on status

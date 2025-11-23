@@ -27,6 +27,11 @@ const Navbar = () => {
             <span className="hidden sm:inline">{t('NavHowItWorks')}</span>
             <FiLayers className="sm:hidden inline h-6 w-6" />
           </Link>
+        
+          <Link href="/pricing" className="text-white/80 hover:text-white transition-colors">
+            <span className="hidden sm:inline">{t('NavPricing')}</span>
+            <FiLayers className="sm:hidden inline h-6 w-6" />
+          </Link>
 
           <Link href="/auth/signin" className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors"
           >

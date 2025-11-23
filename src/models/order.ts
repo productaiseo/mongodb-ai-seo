@@ -22,6 +22,8 @@ const PaymentOrderSchema = new Schema(
                 quantity: Number,
             }
         ],
+        planId: String,
+        planName: String,
         createdAt: Date,
         paidAt: Date,
         updatedAt: Date,

@@ -118,6 +118,40 @@ export class OrderManager {
   }
 
   /**
+   * Update order status
+  */
+  static async updateOrderStatus(
+    merchantOid: string,
+    status: 'completed' | 'failed',
+    additionalData?: Partial<PaymentOrder>
+  ): Promise<void> {
+    try {
+      await dbConnect();
+
+      const updateData: any = {
+        status,
+        updatedAt: new Date(),
+        ...additionalData,
+      };
+
+      const order = await PaymentOrderModel.findOneAndUpdate(
+        { merchantOid },
+        { $set: updateData },
+      );
+
+      if (!order) {
+        console.warn(`⚠️ Order not found: ${merchantOid}`);
+        return;
+      } else {
+        console.log(`✅ Order ${merchantOid} updated to status: ${status}`);
+      }
+    } catch (error) {
+      console.error('❌ Error updating order status:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get order by merchant order ID
    */
   static async getOrderByMerchantOid(merchantOid: string): Promise<PaymentOrder | null> {
