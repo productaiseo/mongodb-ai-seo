@@ -19,7 +19,7 @@ export const pricingTiers: PricingTier[] = [
     features: [
       'Tüm AI platformunda görünürlük',
       'Aylık performans raporu',
-      'Temel SEO optimizasyonu',
+      'Temel GEO optimizasyonu',
       'Email destek',
       '1 web sitesi'
     ]
