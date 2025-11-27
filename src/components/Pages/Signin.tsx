@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icons } from "@/components/ui/Icons";
+import { useAuth } from "@/contexts/AuthContext"; 
 
 // Zod schema matching your backend DTO
 const signInSchema = z.object({
@@ -18,6 +19,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 const SignInPage = () => {
   const router = useRouter();
+  const { signIn } = useAuth(); // from context
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,23 +37,8 @@ const SignInPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/auth/signin`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(data),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Giriş işlemi başarısız oldu");
-      }
+      // the signIn from AuthContext updates the context state
+      await signIn(data.email, data.password);
 
       // Redirect to home page
       router.push("/");
