@@ -13,8 +13,8 @@ export const pricingTiers: PricingTier[] = [
   {
     id: 'basic',
     name: 'Temel Paket',
-    price: 50000, // 500.00 TL (in kuruş)
-    displayPrice: '500',
+    price: 500, // 5.00 TL (in kuruş)
+    displayPrice: '5',
     description: 'Küçük işletmeler için ideal başlangıç paketi',
     features: [
       'Tüm AI platformunda görünürlük',
@@ -27,8 +27,8 @@ export const pricingTiers: PricingTier[] = [
   {
     id: 'professional',
     name: 'Profesyonel Paket',
-    price: 65000, // 650.00 TL (in kuruş)
-    displayPrice: '650',
+    price: 700, // 7.00 TL (in kuruş)
+    displayPrice: '7',
     description: 'Büyüyen işletmeler için gelişmiş özellikler',
     popular: true,
     features: [
@@ -44,8 +44,8 @@ export const pricingTiers: PricingTier[] = [
   {
     id: 'enterprise',
     name: 'Kurumsal Paket',
-    price: 80000, // 800.00 TL (in kuruş)
-    displayPrice: '800',
+    price: 800, // 8.00 TL (in kuruş)
+    displayPrice: '8',
     description: 'Büyük ölçekli kurumlar için kapsamlı çözüm',
     features: [
       'Tüm AI platformlarında görünürlük',

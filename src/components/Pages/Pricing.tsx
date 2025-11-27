@@ -4,13 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { pricingTiers, PricingTier } from "@/lib/datas/pricingTiers";
 import { Icons } from "@/components/ui/Icons";
+import { useAuth } from "@/contexts/AuthContext"; 
 
 
 const PricingPage = () => {
 
   const router = useRouter();
+  const { user } = useAuth(); // from context
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // test mode should be 1 for development, else 0 (for production)
+  const TestNode = process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE || "0";
+  console.log("Payment Test Node:", TestNode);
 
   const handleSelectPlan = async (tier: PricingTier) => {
     setLoading(tier.id);
@@ -33,14 +39,14 @@ const PricingPage = () => {
         },
         body: JSON.stringify({
           amount: tier.price,
-          email: "customer@example.com", // Bu gerçek kullanıcı emaili olmalı
-          userName: "Müşteri Adı", // Gerçek kullanıcı adı
-          userAddress: "İstanbul, Türkiye", // Gerçek adres
-          userPhone: "05555555555", // Gerçek telefon
+          email: user?.email || "customer@example.com",
+          userName: user?.name || "Müşteri Adı",
+          userAddress: "İstanbul, Türkiye", // default address
+          userPhone: "05555555555", // default phone
           currency: "TL",
           maxInstallment: "12",
           noInstallment: "0",
-          testMode: "1", // Production'da '0' olmalı
+          testMode: TestNode, // Production'da '0' olmalı
           planId: tier.id,
           planName: tier.name,
           basket: basket,

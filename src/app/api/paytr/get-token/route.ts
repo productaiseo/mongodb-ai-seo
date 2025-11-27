@@ -7,6 +7,9 @@ const MERCHANT_ID = process.env.PAYTR_MERCHANT_ID;
 const MERCHANT_KEY = process.env.PAYTR_MERCHANT_KEY;
 const MERCHANT_SALT = process.env.PAYTR_MERCHANT_SALT;
 
+ // test mode should be 1 for development, else 0 (for production)
+const TestNode = process.env.NEXT_PUBLIC_PAYMENT_TEST_MODE || '1';
+
 interface BasketItem {
   name: string;
   price: string;
@@ -42,6 +45,8 @@ export async function POST(request: NextRequest) {
     // Generate unique merchant order ID
     const merchantOid = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
+    console.log("API Test Node:", TestNode);
+
     // Payment parameters with validation
     const paymentAmount = body.amount || 10000; // Amount in kuruş (multiply by 100)
     const email = body.email || 'customer@example.com';
@@ -51,7 +56,9 @@ export async function POST(request: NextRequest) {
     const currency = body.currency || 'TL';
     const maxInstallment = body.maxInstallment || '0';
     const noInstallment = body.noInstallment || '0';
-    const testMode = body.testMode || '1'; // Set to 1 for testing
+    const testMode = body.testMode || TestNode; // Set to 1 for testing
+
+    console.log("Test Mode:", testMode);
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
       user_basket: userBasket,
       user_ip: userIp,
       timeout_limit: '30',
-      debug_on: '1', // Keep this 1 for debugging, set to 0 in production
+      debug_on: TestNode, // Keep this 1 for debugging, set to 0 in production
       test_mode: testMode,
       lang: 'tr',
       no_installment: noInstallment,
@@ -133,7 +140,7 @@ export async function POST(request: NextRequest) {
           userAddress,
           paymentAmount,
           currency,
-          testMode: testMode === '1',
+          testMode,
           basket: basket,
           planId: body.planId || null,
           planName: body.planName || null,
