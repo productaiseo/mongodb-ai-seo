@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { authService } from "@/lib/services/authService";
 
 
 const VerifyEmail = () => {
@@ -18,7 +19,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     const verifyEmail = async () => {
       const token = searchParams?.get("token");
-      const callbackURL = searchParams?.get("callbackURL") || "/";
+      const callbackURL = searchParams?.get("callbackURL") || "/auth/signin";
 
       if (!token) {
         setStatus("error");
@@ -27,25 +28,7 @@ const VerifyEmail = () => {
       }
 
       try {
-        const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
-          }/auth/verify-email?token=${encodeURIComponent(token)}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            // body: JSON.stringify({ token }),
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "E-posta doğrulama başarısız oldu");
-        }
+        await authService.verifyEmail(encodeURIComponent(token));
 
         setStatus("success");
         setMessage("E-posta adresiniz başarıyla doğrulandı!");
