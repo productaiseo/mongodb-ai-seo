@@ -67,11 +67,11 @@ export default async function RootLayout({children}: Readonly<Props>) {
   return (
     <html lang={locale}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <NextIntlClientProvider messages={messages} locale={locale}>
           <AuthProvider>
-          {children}
+            <NextIntlClientProvider messages={messages} locale={locale}>
+              {children}
+            </NextIntlClientProvider>
           </AuthProvider>
-        </NextIntlClientProvider>
       </body>
     </html>
   );

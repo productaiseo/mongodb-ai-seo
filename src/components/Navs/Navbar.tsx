@@ -14,7 +14,7 @@ import Logo from '@/components/Logo';
 const Navbar = () => {
 
   const t = useTranslations("HomePage");
-  const { user, isAuthenticated, signOut, isLoading } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
 
   return (
     <div className="container flex justify-between items-center mx-auto px-4 md:px-0 z-10">
@@ -37,11 +37,7 @@ const Navbar = () => {
         </Link>
 
         {/* Show loading state */}
-        {isLoading ? (
-          <div className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-md text-white/80">
-            <Icons.Spinner className="w-4 h-4 animate-spin" />
-          </div>
-        ) : isAuthenticated ? (
+        {isAuthenticated ? (
           /* Show user dropdown when authenticated */
           <Button
             onClick={signOut}
